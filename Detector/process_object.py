@@ -91,28 +91,23 @@ def process_object(coordinates, min_size, q, calibration, workbook):
         anything2.append(queue)
         i += 1
 
-    j = 0
-    for a in range(len(anything2)):
-        if len(anything2[j]) <= min_size:
-            anything2.remove(anything2[j])
-            j -= 1
-        j += 1
+    for obj in anything2.copy():
+        if len(obj) <= min_size:
+            anything2.remove(obj)
 
     index = 0
     if len(anything2) == 1:
-        for n in range(len(anything2)):
-            for (i, j) in anything2[n]:
+        for n in anything2:
+            for (i, j) in n:
                 for k in range(i - 1, i + 1):
                     for l in range(j - 1, j + 1):
                         test[k - coordinates[0] - 1 + 5, l - coordinates[2] - 1 + 5] = (256, 0, 0)
-    elif len(anything2) == 0:
-        pass
-    else:
+    elif len(anything2) > 1:
         mx = max(len(x) for x in anything2)
-        for n in range(len(anything2)):
-            if len(anything2[n]) == mx:
+        for n in anything2:
+            if len(n) == mx:
                 index = n
-                for (i, j) in anything2[n]:
+                for (i, j) in n:
                     for k in range(i - 1, i + 1):
                         for l in range(j - 1, j + 1):
                             test[k - coordinates[0] - 1 + 5, l - coordinates[2] - 1 + 5] = (256, 0, 0)

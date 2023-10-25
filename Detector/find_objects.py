@@ -81,16 +81,16 @@ def find_objects(name, out1, min_size, sensitivity):
         ts = Image.new('RGB', (pim.size[0], pim.size[1]), color='white')
         test = ts.load()
 
-        for n in range(len(anything)):
-            for (i, j) in anything[n]:
+        for n in anything:
+            for (i, j) in n:
                 for k in range(i - 3, i + 3):
                     for l in range(j - 3, j + 3):
                         test[k, l] = (256, 0, 0)
 
         centre = []
-        for q in range(len(anything)):
-            centre.append((int(sum(x for (x, y) in anything[q]) / len(anything[q])),
-                           int(sum(y for (x, y) in anything[q]) / len(anything[q]))))
+        for q in anything:
+            centre.append((int(sum(x for (x, y) in q) / len(q)),
+                           int(sum(y for (x, y) in q) / len(q))))
 
         p = 0
         for (i, j) in centre:

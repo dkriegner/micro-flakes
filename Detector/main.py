@@ -5,6 +5,7 @@ import shutil
 from find_objects import find_objects
 from process_object import process_object
 
+
 def take_webcam_image(filename):
     # This function takes a photo by webcam.
     cap = cv2.VideoCapture(0, cv2.CAP_MSMF)
@@ -145,6 +146,7 @@ print("processed: ", end="")
 for q in range(1, len(candidates)):
     print(f"{q}, ", end="")
     width = process_object(candidates[q], min_size, q, calibration, workbook)
+    # Process one object and write the width of the photo of the object for set width of the column in Excel table.
     if max_width < width:
         max_width = width
 
