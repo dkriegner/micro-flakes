@@ -1,11 +1,12 @@
-from PIL import Image, ImageDraw
+from PIL import Image
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as Xl
 import cv2
 import os
 import shutil
 import numpy as np
-
+from find_objects import find_objects
+from process_object import gamma_correct, change_contrast
 
 def take_webcam_image(filename):
     # This function takes a photo by webcam.
@@ -58,30 +59,6 @@ def check_bool(vs):
             vs = input("Write 0 or 1: ")
 
 
-def gamma_correct(im, gamma):
-    gamma1 = gamma
-    row = im.size[0]
-    col = im.size[1]
-    result_img1 = Image.new(mode="RGB", size=(row, col), color=0)
-    for x in range(row):
-        for y in range(col):
-            r = pow(im.getpixel((x, y))[0] / 255, (1 / gamma1)) * 255
-            g = pow(im.getpixel((x, y))[1] / 255, (1 / gamma1)) * 255
-            b = pow(im.getpixel((x, y))[2] / 255, (1 / gamma1)) * 255
-            color = (int(r), int(g), int(b))
-            result_img1.putpixel((x, y), color)
-    return result_img1
-
-
-def change_contrast(img, level):
-    factor = (259 * (level + 255)) / (255 * (259 - level))
-
-    def contrast(c):
-        return 128 + factor * (c - 128)
-
-    return img.point(contrast)
-
-
 def clean_output():
     # clean output folder
     path1 = os.path.dirname(__file__)
@@ -90,8 +67,9 @@ def clean_output():
         shutil.rmtree(os.path.join(path1, path2))
     os.makedirs(os.path.join(path1, path2))
 
+
 # Fixed setting parameters
-calibration = 0.187 # calibration factor to get real size of sample
+calibration = 0.187  # calibration factor to get real size of sample
 
 clean_output()
 # Print a welcome screen and ask user's input
@@ -113,9 +91,6 @@ else:
         print("Error! The file doesn't exist.")
         name = input("input/")  # ask for a new input
 
-pim = Image.open(f"input/{name}")  # open the original photo
-print("The photo has been opened.")
-
 print('Do you want to get image output after 1st iteration?')
 out1 = check_bool(input("yes - 1, on - 0: "))
 
@@ -134,108 +109,7 @@ else:
     sensitivity = check_float(sensitivity)
 
 print("The first iteration:")
-print("changing gamma and contrast of the original photo")
-# pim = gamma_correct(pim, 1.5)
-# pim = change_contrast(pim, 100)
-pim.save(f"output/org_gc.png")  # save the original photo with gamma and contrast correction
-pro = pim.load()
-
-# create new images for processing (object area in low resolution)
-nw = Image.new('RGB', (pim.size[0], pim.size[1]), color='white')
-new = nw.load()
-
-detect = []  # coordinates of detected object area
-
-print("marking non-black area")
-for i in range(pim.size[0] - 1):
-    for j in range(pim.size[1] - 1):
-        R, G, B = pro[i, j]
-        if R > sensitivity or G > sensitivity or B > sensitivity:
-            pro[i, j] = (255, 0, 0)
-
-print("finding object area")
-for i in range(3, pim.size[0] - 4, 6):
-    for j in range(3, pim.size[1] - 4, 6):
-        red = 0  # number of red pixels
-        px = 0  # number of all pixels
-        for k in range(i - 3, i + 3):
-            for l in range(j - 3, j + 3):
-                if pro[k, l] == (255, 0, 0):
-                    red += 1
-                px += 1
-        if px != 0:
-            if red / float(px) > 0.6:
-                for k in range(i - 3, i + 3):
-                    for l in range(j - 3, j + 3):
-                        new[k, l] = (255, 0, 0)
-                detect.append((i, j))
-
-print("finding whole objects")
-
-detect = np.array(detect)
-
-anything = []  # detected whole objects
-
-while len(detect) > 0:  # find neighbor marked pixel
-    seed = detect[0]
-    queue = [seed]
-    detect = detect[1:]
-
-    i = 0
-    while i < len(queue):
-        x, y = queue[i]
-        for dx in [-6, 0, 6]:
-            for dy in [-6, 0, 6]:
-                if (dx == 0 and dy == 0) or (dx != 0 and dy != 0):
-                    continue
-                neighbor = (x + dx, y + dy)
-                mask = np.all(detect == neighbor, axis=1)
-                if np.any(mask):
-                    queue.append(neighbor)
-                    detect = detect[~mask]
-
-        i += 1
-
-    anything.append(queue)
-
-print("deleting too small object")
-for obj in anything.copy():
-    if len(obj) <= min_size:
-        anything.remove(obj)
-
-# create output photo of detected object with centres and area of detected edges
-if out1 == 1:
-
-    ts = Image.new('RGB', (pim.size[0], pim.size[1]), color='white')
-    test = ts.load()
-
-    for n in range(len(anything)):
-        for (i, j) in anything[n]:
-            for k in range(i - 3, i + 3):
-                for l in range(j - 3, j + 3):
-                    test[k, l] = (256, 0, 0)
-
-    centre = []
-    for q in range(len(anything)):
-        centre.append((int(sum(x for (x, y) in anything[q]) / len(anything[q])),
-                       int(sum(y for (x, y) in anything[q]) / len(anything[q]))))
-
-    p = 0
-    for (i, j) in centre:
-        ImageDraw.Draw(ts).text((i + 5, j + 5), str(len(anything[p])), (0, 0, 0))
-        for k in range(i - 5, i + 5):
-            for l in range(j - 5, j + 5):
-                test[k, l] = (0, 0, 0)
-        p += 1
-
-    name = "first_step"  # name output files of the first iteration
-    ts.save(f'output/{name}_1.png')  # store detected objects with centre and size of edge
-    pim.save(f'output/{name}_2.png')  # store marked object area
-    nw.save(f'output/{name}_3.png')  # store object area in low resolution
-    ts.close()
-
-pim.close()
-nw.close()
+anything = find_objects(name, out1, min_size, sensitivity)  # write coordinates of found objects from input
 
 print("The second iteration:")
 # Now, find objects from the first iteration in the same area in high resolution
@@ -247,10 +121,9 @@ org = pim.load()
 
 # Set area for finding object in high resolution
 candidates = []  # (x_min, x_max, y_min, y_max)
-for q in range(len(anything)):
-    x_min, x_max, y_min, y_max = (
-    int(min(x for (x, y) in anything[q])), int(max(x for (x, y) in anything[q])), int(min(y for (x, y) in anything[q])),
-    int(max(y for (x, y) in anything[q])))
+for q in anything:
+    x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
+                                  int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
     if (x_max - x_min) * (y_max - y_min) < 50000:
         candidates.append((x_min, x_max, y_min, y_max))
 
