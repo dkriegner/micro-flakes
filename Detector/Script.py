@@ -81,15 +81,20 @@ def change_contrast(img, level):
 
     return img.point(contrast)
 
+
+def clean_output():
+    # clean output folder
+    path1 = os.path.dirname(__file__)
+    path2 = "output\\objects"
+    if os.path.exists(os.path.join(path1, path2)):
+        shutil.rmtree(os.path.join(path1, path2))
+    os.makedirs(os.path.join(path1, path2))
+
+# Fixed setting parameters
 calibration = 0.187 # calibration factor to get real size of sample
 
-# clean output folder
-path1 = os.path.dirname(__file__)
-path2 = "output\\objects"
-if os.path.exists(os.path.join(path1, path2)):
-    shutil.rmtree(os.path.join(path1, path2))
-os.makedirs(os.path.join(path1, path2))
-
+clean_output()
+# Print a welcome screen and ask user's input
 print("Welcome in software to automatics detect object in microscope.")
 print("For default value write \"d\".\n")
 print("For take a new photo, write 0. For open a existing photo, write 1.")
@@ -228,8 +233,9 @@ if out1 == 1:
     pim.save(f'output/{name}_2.png')  # store marked object area
     nw.save(f'output/{name}_3.png')  # store object area in low resolution
     ts.close()
-    pim.close()
-    nw.close()
+
+pim.close()
+nw.close()
 
 print("The second iteration:")
 # Now, find objects from the first iteration in the same area in high resolution
