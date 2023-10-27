@@ -1,5 +1,5 @@
 ABOUT
-This software, designed to automatically detect objects under a microscope, is a terminal application developed in Python. It was created by Jiri Zelenka for the Institute of Physics of the Czech Academy of Sciences. The software is optimized for MS Windows.
+This software, designed to automatically detect objects under a microscope, is a terminal application developed in Python. It was created by Jiri Zelenka for the Institute of Physics of the Czech Academy of Sciences. The software is optimized for Python 3.11.4 in MS Windows.
 
 INSTALLATION
 To run this software, Python 3 and the following libraries are required:
@@ -8,7 +8,9 @@ To run this software, Python 3 and the following libraries are required:
 - cv2
 - shutil
 - numpy
-To install, open "install_libraries.txt" in the root.
+To install, use following command:
+pip install -r requirements.txt
+It is necessary to have PIP in Python installed. To install, visit this webpage: https://pip.pypa.io/en/stable/installation/.
 
 HOW IT WORKS
 The root directory contains two folders. The "input" folder is for storing images to be processed. The software supports jpg and png formats and can also capture new images from a webcam. After processing, the "output" folder will contain the processed files. The most important file is "Index_of_objects.xlsx", an Excel table listing the detected objects along with their parameters.

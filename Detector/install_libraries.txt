@@ -1,9 +1,0 @@
-To install necessary libraries, use following commands:
-
-pip install Pillow
-pip install openpyxl
-pip install opencv-python
-pip install shutils
-pip install numpy
-
-It is necessary to have PIP in Python installed. To install, visit this webpage: https://pip.pypa.io/en/stable/installation/
