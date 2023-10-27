@@ -10,6 +10,7 @@ To run this software, Python 3 and the following libraries are required:
 - cv2
 - shutil
 - numpy
+
 To install, use following command:
 ```
 pip install -r requirements.txt
