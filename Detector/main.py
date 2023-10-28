@@ -2,8 +2,8 @@ from openpyxl import Workbook
 import cv2
 import os
 import shutil
-from find_objects import find_objects
-from process_object import process_object
+from .find_objects import find_objects
+from .process_object import process_object
 
 
 def take_webcam_image(filename):
@@ -66,89 +66,90 @@ def clean_output():
     os.makedirs(os.path.join(path1, path2))
 
 
-# Fixed setting parameters
-calibration = 0.187  # calibration factor to get real size of sample
+def main():
+    # Fixed setting parameters
+    calibration = 0.187  # calibration factor to get real size of sample
 
-clean_output()
-# Print a welcome screen and ask user's input
-print("Welcome in software to automatics detect object in microscope.")
-print("For default value write \"d\".\n")
-print("For take a new photo, write 0. For open a existing photo, write 1.")
-settings = check_bool(input("Write number: "))
+    clean_output()
+    # Print a welcome screen and ask user's input
+    print("Welcome in software to automatics detect object in microscope.")
+    print("For default value write \"d\".\n")
+    print("For take a new photo, write 0. For open a existing photo, write 1.")
+    settings = check_bool(input("Write number: "))
 
-if settings == 0:
-    name = input("Write name of the new photo: ")
-    take_webcam_image(name)
-    name += ".jpg"
-else:
-    print("Files in input:")
-    print(os.listdir("input/"))
-    print("Write name of photo from microscope.")
-    name = input("input/")
-    while not os.path.exists(f"input/{name}"):  # check if the file exists
-        print("Error! The file doesn't exist.")
-        name = input("input/")  # ask for a new input
+    if settings == 0:
+        name = input("Write name of the new photo: ")
+        take_webcam_image(name)
+        name += ".jpg"
+    else:
+        print("Files in input:")
+        print(os.listdir("input/"))
+        print("Write name of photo from microscope.")
+        name = input("input/")
+        while not os.path.exists(f"input/{name}"):  # check if the file exists
+            print("Error! The file doesn't exist.")
+            name = input("input/")  # ask for a new input
 
-print('Do you want to get image output after 1st iteration?')
-out1 = check_bool(input("yes - 1, on - 0: "))
+    print('Do you want to get image output after 1st iteration?')
+    out1 = check_bool(input("yes - 1, on - 0: "))
 
-print('Write minimal area of edge of object. Smaller object will be deleted. Default: 42.4 um^2')
-min_size = input("size = ")
-if min_size == "d":
-    min_size = 25  # size in pixels
-else:
-    min_size = check_float(min_size) / 1.6952  # convert size from micro meters to pixels
+    print('Write minimal area of edge of object. Smaller object will be deleted. Default: 42.4 um^2')
+    min_size = input("size = ")
+    if min_size == "d":
+        min_size = 25  # size in pixels
+    else:
+        min_size = check_float(min_size) / 1.6952  # convert size from micro meters to pixels
 
-print('Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input. Default: 40')
-sensitivity = input("size = ")
-if sensitivity == "d":
-    sensitivity = 40
-else:
-    sensitivity = check_float(sensitivity)
+    print('Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input. Default: 40')
+    sensitivity = input("size = ")
+    if sensitivity == "d":
+        sensitivity = 40
+    else:
+        sensitivity = check_float(sensitivity)
 
-print("The first iteration:")
-anything = find_objects(name, out1, min_size, sensitivity)  # write coordinates of found objects from input
+    print("The first iteration:")
+    anything = find_objects(name, out1, min_size, sensitivity)  # write coordinates of found objects from input
 
-print("The second iteration:")
-# Now, find objects from the first iteration in the same area in high resolution
+    print("The second iteration:")
+    # Now, find objects from the first iteration in the same area in high resolution
 
-# Set area for finding object in high resolution
-candidates = []  # (x_min, x_max, y_min, y_max)
-for q in anything:
-    x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
-                                  int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
-    if (x_max - x_min) * (y_max - y_min) < 50000:
-        candidates.append((x_min, x_max, y_min, y_max))
+    # Set area for finding object in high resolution
+    candidates = []  # (x_min, x_max, y_min, y_max)
+    for q in anything:
+        x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
+                                      int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
+        if (x_max - x_min) * (y_max - y_min) < 50000:
+            candidates.append((x_min, x_max, y_min, y_max))
 
-workbook = Workbook()  # create MS Excel table
+    workbook = Workbook()  # create MS Excel table
 
-sheet = workbook.active
-sheet["A1"] = "id"
-sheet["B1"] = "x (um)"
-sheet["C1"] = "y (um)"
-sheet["D1"] = "size (um^2)"
-sheet["E1"] = "transparency (%)"
-sheet["F1"] = "size ratio"
-sheet["G1"] = "photo"
-sheet["H1"] = "contourI"
-sheet["I1"] = "contourII"
-sheet["J1"] = "filter - contour"  # Does the object have a constant contour?  3,5 (3,7) - 5
-sheet["K1"] = "Value - bigger is better"
-sheet["L1"] = "filter - transparency"  # Is the object transparent?  >0,1 (0,08)
-sheet["M1"] = "Value - bigger is better"
-sheet["N1"] = "Bright"
-sheet["O1"] = "Height"
+    sheet = workbook.active
+    sheet["A1"] = "id"
+    sheet["B1"] = "x (um)"
+    sheet["C1"] = "y (um)"
+    sheet["D1"] = "size (um^2)"
+    sheet["E1"] = "transparency (%)"
+    sheet["F1"] = "size ratio"
+    sheet["G1"] = "photo"
+    sheet["H1"] = "contourI"
+    sheet["I1"] = "contourII"
+    sheet["J1"] = "filter - contour"  # Does the object have a constant contour?  3,5 (3,7) - 5
+    sheet["K1"] = "Value - bigger is better"
+    sheet["L1"] = "filter - transparency"  # Is the object transparent?  >0,1 (0,08)
+    sheet["M1"] = "Value - bigger is better"
+    sheet["N1"] = "Bright"
+    sheet["O1"] = "Height"
 
-# Make the same procedure as in the first iteration.
-print(f"processing of {len(candidates)}")
-max_width = 0
-print("processed: ", end="")
-for q in range(1, len(candidates)):
-    print(f"{q}, ", end="")
-    width = process_object(candidates[q], min_size, q, calibration, workbook)
-    # Process one object and write the width of the photo of the object for set width of the column in Excel table.
-    if max_width < width:
-        max_width = width
+    # Make the same procedure as in the first iteration.
+    print(f"processing of {len(candidates)}")
+    max_width = 0
+    print("processed: ", end="")
+    for q in range(1, len(candidates)):
+        print(f"{q}, ", end="")
+        width = process_object(candidates[q], min_size, q, calibration, workbook)
+        # Process one object and write the width of the photo of the object for set width of the column in Excel table.
+        if max_width < width:
+            max_width = width
 
-sheet.column_dimensions['G'].width = max_width * 0.15
-workbook.save("output/Index_of_objects.xlsx")  # save Excel table
+    sheet.column_dimensions['G'].width = max_width * 0.15
+    workbook.save("output/Index_of_objects.xlsx")  # save Excel table
