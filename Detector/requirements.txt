@@ -1,5 +1,5 @@
-pip install Pillow==9.4.0
-pip install openpyxl==3.0.9
-pip install opencv==4.6.0
-pip install shutils==3.0.9
-pip install numpy==1.25.2
+pip install Pillow>=9.4.0
+pip install openpyxl>=3.0.9
+pip install opencv-python>=4.6.0
+pip install shutils>=3.0.9
+pip install numpy>=1.25.2
