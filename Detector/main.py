@@ -6,7 +6,7 @@ from .find_objects import find_objects
 from .process_object import process_object
 
 
-def take_webcam_image(filename):
+def take_webcam_image(path, filename):
     # This function takes a photo by webcam.
     cap = cv2.VideoCapture(0, cv2.CAP_MSMF)
     # cap.set(14, 500) # gain
@@ -25,7 +25,7 @@ def take_webcam_image(filename):
         # cv2.normalize(frame, frame, 100, 255, cv2.NORM_MINMAX)
         # frame = cv2.resize(frame, None, fx=1, fy=1, interpolation=cv2.INTER_AREA)
         cv2.imshow('Input', frame)
-        cv2.imwrite(filename=f'{filename}.jpg', img=frame)
+        cv2.imwrite(filename=f'{path}/{filename}.jpg', img=frame)
         # print(frame)
         c = cv2.waitKey(1)
         if c == 27:
@@ -57,36 +57,58 @@ def check_bool(vs):
             vs = input("Write 0 or 1: ")
 
 
-def clean_output():
+def manage_subfolders(path):
     # clean output folder
-    path1 = os.path.dirname(__file__)
+    path1 = path
     path2 = "output\\objects"
+    if not os.path.exists(os.path.join(path1, "input")):
+        os.makedirs(os.path.join(path1, "input"))
+    if not os.path.exists(os.path.join(path1, "output")):
+        os.makedirs(os.path.join(path1, "output"))
     if os.path.exists(os.path.join(path1, path2)):
         shutil.rmtree(os.path.join(path1, path2))
     os.makedirs(os.path.join(path1, path2))
 
 
 def main():
+    try:
+        cache  = open(r"CACHE", "r")
+    except:
+        cache = open(r"CACHE", "w+")
+    path = cache.read()
+    cache.close()
+
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample
 
-    clean_output()
-    # Print a welcome screen and ask user's input
+    # Print a welcome screen and ask user's inputs
     print("Welcome in software to automatics detect object in microscope.")
     print("For default value write \"d\".\n")
+
+    print(f"Working path: {path}")
+    print("Do you change the path? ")
+    out2 = check_bool(input("yes - 1, on - 0: "))
+    if out2 == 1:
+        path = input("New path: ")
+        cache = open(r"CACHE", "w")
+        cache.write(path)
+        cache.close()
+        print(f"Working path has set to {path}.")
+    manage_subfolders(path)
+
     print("For take a new photo, write 0. For open a existing photo, write 1.")
     settings = check_bool(input("Write number: "))
 
     if settings == 0:
         name = input("Write name of the new photo: ")
-        take_webcam_image(name)
+        take_webcam_image(path, name)
         name += ".jpg"
     else:
         print("Files in input:")
-        print(os.listdir("input/"))
+        print(os.listdir(f"{path}/input/"))
         print("Write name of photo from microscope.")
         name = input("input/")
-        while not os.path.exists(f"input/{name}"):  # check if the file exists
+        while not os.path.exists(f"{path}/input/{name}"):  # check if the file exists
             print("Error! The file doesn't exist.")
             name = input("input/")  # ask for a new input
 
@@ -108,7 +130,7 @@ def main():
         sensitivity = check_float(sensitivity)
 
     print("The first iteration:")
-    anything = find_objects(name, out1, min_size, sensitivity)  # write coordinates of found objects from input
+    anything = find_objects(path, name, out1, min_size, sensitivity)  # write coordinates of found objects from input
 
     print("The second iteration:")
     # Now, find objects from the first iteration in the same area in high resolution
@@ -141,15 +163,17 @@ def main():
     sheet["O1"] = "Height"
 
     # Make the same procedure as in the first iteration.
-    print(f"processing of {len(candidates)}")
+    print(f"processing of {len(candidates) - 1}")
     max_width = 0
     print("processed: ", end="")
     for q in range(1, len(candidates)):
         print(f"{q}, ", end="")
-        width = process_object(candidates[q], min_size, q, calibration, workbook)
+        width = process_object(path, candidates[q], min_size, q, calibration, workbook)
         # Process one object and write the width of the photo of the object for set width of the column in Excel table.
         if max_width < width:
             max_width = width
 
     sheet.column_dimensions['G'].width = max_width * 0.15
-    workbook.save("output/Index_of_objects.xlsx")  # save Excel table
+    workbook.save(f"{path}/output/Index_of_objects.xlsx")  # save Excel table
+
+    input("\nThe task has been finished. Press some key for close a script.")
