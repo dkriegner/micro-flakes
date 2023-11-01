@@ -2,14 +2,14 @@ from PIL import Image, ImageDraw
 import numpy as np
 
 
-def find_objects(name, out1, min_size, sensitivity):
-    pim = Image.open(f"input/{name}")  # open the original photo
+def find_objects(path, name, out1, min_size, sensitivity):
+    pim = Image.open(f"{path}/input/{name}")  # open the original photo
     print("The photo has been opened.")
 
     print("changing gamma and contrast of the original photo")
     # pim = gamma_correct(pim, 1.5)
     # pim = change_contrast(pim, 100)
-    pim.save(f"output/org_gc.png")  # save the original photo with gamma and contrast correction
+    pim.save(f"{path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
     pro = pim.load()
 
     # create new images for processing (object area in low resolution)
@@ -101,9 +101,9 @@ def find_objects(name, out1, min_size, sensitivity):
             p += 1
 
         name = "first_step"  # name output files of the first iteration
-        ts.save(f'output/{name}_1.png')  # store detected objects with centre and size of edge
-        pim.save(f'output/{name}_2.png')  # store marked object area
-        nw.save(f'output/{name}_3.png')  # store object area in low resolution
+        ts.save(f'{path}/output/{name}_1.png')  # store detected objects with centre and size of edge
+        pim.save(f'{path}/output/{name}_2.png')  # store marked object area
+        nw.save(f'{path}/output/{name}_3.png')  # store object area in low resolution
         ts.close()
 
     pim.close()

@@ -25,10 +25,10 @@ def change_contrast(img, level):
     return img.point(contrast)
 
 
-def process_object(coordinates, min_size, q, calibration, workbook):
+def process_object(path, coordinates, min_size, q, calibration, workbook):
     name2 = "object"  # name of photos of found objects
 
-    pim = Image.open(f'output/org_gc.png')  # open corrected original photo
+    pim = Image.open(f'{path}/output/org_gc.png')  # open corrected original photo
     org = pim.load()
 
     nw = Image.new('RGB', (coordinates[1] - coordinates[0] + 8, coordinates[3] - coordinates[2] + 8),
@@ -48,7 +48,7 @@ def process_object(coordinates, min_size, q, calibration, workbook):
             bright2 += R + G + B
             if R > 80 or G > 80 or B > 80:
                 org[i, j] = (256, 0, 0)
-    nw.save(f'output/objects/{name2}_{q}.png')  # storage image q-th objects
+    nw.save(f'{path}/output/objects/{name2}_{q}.png')  # storage image q-th objects
 
     for i in range(coordinates[0] - 4, coordinates[1] - 1 + 4, 2):
         for j in range(coordinates[2] - 4, coordinates[3] - 1 + 4, 2):
@@ -116,19 +116,19 @@ def process_object(coordinates, min_size, q, calibration, workbook):
                int(sum(y for (x, y) in anything2[index]) / len(anything2[index]))))
 
     # mark shapes of image
-    shape = Image.open(f'output/objects/{name2}_{q}.png')
+    shape = Image.open(f'{path}/output/objects/{name2}_{q}.png')
     shape = gamma_correct(shape, 1.5)
     shape = change_contrast(shape, 100)
-    shape.save(f'output/objects/processing0_{q}.png')
+    shape.save(f'{path}/output/objects/processing0_{q}.png')
 
-    shape = cv2.imread(f'output/objects/processing0_{q}.png')
+    shape = cv2.imread(f'{path}/output/objects/processing0_{q}.png')
     shape = cv2.cvtColor(shape, cv2.COLOR_BGR2RGB)
     shape = cv2.addWeighted(shape, 4, shape, 0, 0)
     shape = cv2.cvtColor(shape, cv2.COLOR_BGR2GRAY)
     shape = cv2.Canny(shape, 300, 100)
-    cv2.imwrite(f'output/objects/processing_{q}.png', shape)
+    cv2.imwrite(f'{path}/output/objects/processing_{q}.png', shape)
 
-    prc = Image.open(f'output/objects/processing_{q}.png')  # open corrected original photo
+    prc = Image.open(f'{path}/output/objects/processing_{q}.png')  # open corrected original photo
     pc = prc.load()
 
     # calculate size of the object (new)
@@ -169,13 +169,13 @@ def process_object(coordinates, min_size, q, calibration, workbook):
         full_size2 += (x_max - x_min)
         x_min = x_max = 0
 
-    ts.save(f'output/objects/{name2}2_{q}.png')  # store photo of area of detect object
+    ts.save(f'{path}/output/objects/{name2}2_{q}.png')  # store photo of area of detect object
 
     # fill Excel table
     sheet = workbook.active
-    img = Xl(f'output/objects/{name2}_{q}.png')
+    img = Xl(f'{path}/output/objects/{name2}_{q}.png')
     sheet.add_image(img, f'G{q + 1}')
-    img2 = Image.open(f'output/objects/{name2}_{q}.png')
+    img2 = Image.open(f'{path}/output/objects/{name2}_{q}.png')
     sheet.row_dimensions[q + 1].height = img2.height * 0.8
 
     sheet[f"A{q + 1}"] = q
