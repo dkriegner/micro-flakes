@@ -87,7 +87,7 @@ def main():
 
     print(f"Working path: {path}")
     print("Do you change the path? ")
-    out2 = check_bool(input("yes - 1, on - 0: "))
+    out2 = check_bool(input("no - 0, yes - 1: "))
     if out2 == 1:
         path = input("New path: ")
         cache = open(r"CACHE", "w")
@@ -113,7 +113,7 @@ def main():
             name = input("input/")  # ask for a new input
 
     print('Do you want to get image output after 1st iteration?')
-    out1 = check_bool(input("yes - 1, on - 0: "))
+    out1 = check_bool(input("no - 0, yes - 1: "))
 
     print('Write minimal area of edge of object. Smaller object will be deleted. Default: 42.4 um^2')
     min_size = input("size = ")
