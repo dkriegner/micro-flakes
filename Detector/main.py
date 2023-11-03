@@ -2,8 +2,7 @@ from openpyxl import Workbook
 import cv2
 import os
 import shutil
-from .find_objects import find_objects
-from .process_object import process_object
+from .find_objects import object
 
 
 def take_webcam_image(path, filename):
@@ -130,50 +129,25 @@ def main():
         sensitivity = check_float(sensitivity)
 
     print("The first iteration:")
-    anything = find_objects(path, name, out1, min_size, sensitivity)  # write coordinates of found objects from input
+    figure1 = object(path, name, out1, min_size, sensitivity, calibration)
+    anything = figure1.find_objects()  # write coordinates of found objects from input
 
     print("The second iteration:")
     # Now, find objects from the first iteration in the same area in high resolution
 
     # Set area for finding object in high resolution
-    candidates = []  # (x_min, x_max, y_min, y_max)
-    for q in anything:
-        x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
-                                      int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
-        if (x_max - x_min) * (y_max - y_min) < 50000:
-            candidates.append((x_min, x_max, y_min, y_max))
+    figure1.candidate()
 
-    workbook = Workbook()  # create MS Excel table
-
-    sheet = workbook.active
-    sheet["A1"] = "id"
-    sheet["B1"] = "x (um)"
-    sheet["C1"] = "y (um)"
-    sheet["D1"] = "size (um^2)"
-    sheet["E1"] = "transparency (%)"
-    sheet["F1"] = "size ratio"
-    sheet["G1"] = "photo"
-    sheet["H1"] = "contourI"
-    sheet["I1"] = "contourII"
-    sheet["J1"] = "filter - contour"  # Does the object have a constant contour?  3,5 (3,7) - 5
-    sheet["K1"] = "Value - bigger is better"
-    sheet["L1"] = "filter - transparency"  # Is the object transparent?  >0,1 (0,08)
-    sheet["M1"] = "Value - bigger is better"
-    sheet["N1"] = "Bright"
-    sheet["O1"] = "Height"
+    figure1.prepareteble() # create MS Excel table
 
     # Make the same procedure as in the first iteration.
-    print(f"processing of {len(candidates) - 1}")
-    max_width = 0
+    print(f"processing of {len(figure1.candidates) - 1}")
     print("processed: ", end="")
-    for q in range(1, len(candidates)):
+    for q in range(1, len(figure1.candidates)):
         print(f"{q}, ", end="")
-        width = process_object(path, candidates[q], min_size, q, calibration, workbook)
+        figure1.process_object(q)
         # Process one object and write the width of the photo of the object for set width of the column in Excel table.
-        if max_width < width:
-            max_width = width
 
-    sheet.column_dimensions['G'].width = max_width * 0.15
-    workbook.save(f"{path}/output/Index_of_objects.xlsx")  # save Excel table
+    figure1.finishtable()
 
     input("\nThe task has been finished. Press some key for close a script.")
