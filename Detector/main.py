@@ -2,7 +2,7 @@ from openpyxl import Workbook
 import cv2
 import os
 import shutil
-from .find_objects import object
+from find_objects import Flakes
 
 
 def take_webcam_image(path, filename):
@@ -45,15 +45,15 @@ def check_float(vs):
         vs = input("Write float number: ")
 
 
-def check_bool(vs):
+def check_int(vs, min, max):
     # This function checks  input is an integer.
     vs = check_float(vs)
     while True:
-        if vs == 0 or vs == 1:
+        if vs >= min or vs <= max:
             return int(vs)
         else:
             print("Error! Wrong value.")
-            vs = input("Write 0 or 1: ")
+            vs = input(f"Write integer between {min} and {max}: ")
 
 
 def manage_subfolders(path):
@@ -68,14 +68,19 @@ def manage_subfolders(path):
         shutil.rmtree(os.path.join(path1, path2))
     os.makedirs(os.path.join(path1, path2))
 
-
-def main():
+def read_cache():
+    # Open existing a cache file or reate a new chache file.
     try:
-        cache  = open(r"CACHE", "r")
+        cache = open(r"CACHE", "r")
     except:
         cache = open(r"CACHE", "w+")
     path = cache.read()
     cache.close()
+    return path
+
+def main():
+    # Load last working directory
+    path = read_cache()
 
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample
@@ -86,7 +91,7 @@ def main():
 
     print(f"Working path: {path}")
     print("Do you change the path? ")
-    out2 = check_bool(input("no - 0, yes - 1: "))
+    out2 = check_int(input("no - 0, yes - 1: "), 0, 1)
     if out2 == 1:
         path = input("New path: ")
         cache = open(r"CACHE", "w")
@@ -96,13 +101,15 @@ def main():
     manage_subfolders(path)
 
     print("For take a new photo, write 0. For open a existing photo, write 1.")
-    settings = check_bool(input("Write number: "))
+    settings = check_int(input("Write number: "), 0, 1)
 
     if settings == 0:
+        # Take a new photo.
         name = input("Write name of the new photo: ")
         take_webcam_image(path, name)
         name += ".jpg"
     else:
+        # Open existing photo in the working directory.
         print("Files in input:")
         print(os.listdir(f"{path}/input/"))
         print("Write name of photo from microscope.")
@@ -112,7 +119,7 @@ def main():
             name = input("input/")  # ask for a new input
 
     print('Do you want to get image output after 1st iteration?')
-    out1 = check_bool(input("no - 0, yes - 1: "))
+    out1 = check_int(input("no - 0, yes - 1: "), 0, 1)
 
     print('Write minimal area of edge of object. Smaller object will be deleted. Default: 42.4 um^2')
     min_size = input("size = ")
@@ -126,17 +133,17 @@ def main():
     if sensitivity == "d":
         sensitivity = 40
     else:
-        sensitivity = check_float(sensitivity)
+        sensitivity = check_int(sensitivity, 0, 255)
 
     print("The first iteration:")
-    figure1 = object(path, name, out1, min_size, sensitivity, calibration)
-    anything = figure1.find_objects()  # write coordinates of found objects from input
+    # Find objects in the photo in low resolution
+    figure1 = Flakes(path, name, out1, min_size, sensitivity, calibration)
+    figure1.find_objects()  # find all object in the photo
 
     print("The second iteration:")
     # Now, find objects from the first iteration in the same area in high resolution
 
-    # Set area for finding object in high resolution
-    figure1.candidate()
+    figure1.candidate() # Set area for finding object in high resolution
 
     figure1.prepareteble() # create MS Excel table
 
@@ -148,6 +155,8 @@ def main():
         figure1.process_object(q)
         # Process one object and write the width of the photo of the object for set width of the column in Excel table.
 
-    figure1.finishtable()
+    figure1.finishtable() # Finish and save the table.
 
     input("\nThe task has been finished. Press some key for close a script.")
+
+main()

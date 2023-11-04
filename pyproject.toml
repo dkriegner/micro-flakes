@@ -1,11 +1,11 @@
 [project]
-name = "Detector"
+name = "The Flakes detector"
 version = "0.0.1"
 authors = [
   {name = "Jiri Zelenka", email = "jirka-zelenka@centrum.cz"},
   {name = "Dominik Kriegner", email = "kriegner@fzu.cz"},
 ]
-description = "This software searchs good sample from photo or webcam in a microscope."
+description = "This software searchs good flakes from photo or webcam in a microscope."
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [

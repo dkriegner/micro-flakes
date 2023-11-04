@@ -3,6 +3,8 @@ import numpy as np
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as Xl
 import cv2
+import shutil
+import os
 
 def gamma_correct(im, gamma):
     gamma1 = gamma
@@ -26,8 +28,8 @@ def change_contrast(img, level):
     return img.point(contrast)
 
 
-class object:
-    # Function to detecting flakes.
+class Flakes:
+    # Functions to detecting flakes.
     def __init__(self, path, name, out1, min_size, sensitivity, calibration):
         self.path = path
         self.workbook = 0
@@ -321,7 +323,8 @@ class object:
             full_size2 += (x_max - x_min)
             x_min = x_max = 0
 
-        ts.save(f'{self.path}/output/objects/{self.name}_object{index}_proc0.png')  # store photo of area of detect object
+        if self.out1 == 1:
+            ts.save(f'{self.path}/output/objects/{self.name}_object{index}_proc0.png')  # store photo of area of detect object
 
         # fill Excel table
         sheet = self.workbook.active
@@ -362,5 +365,7 @@ class object:
     def finishtable(self):
         sheet = self.workbook.active
         sheet.column_dimensions['G'].width = self.max_width * 0.15
-        self.workbook.save(f"{self.path}/output/Catalogue_of_objects_from_{self.name}.xlsx")  # save Excel table
+        self.workbook.save(f"{self.path}/output/Catalogue_{self.name}.xlsx")  # save Excel table
+        if self.out1 == 0:
+            shutil.rmtree(os.path.join(self.path, "output\\objects"))
         return 0
