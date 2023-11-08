@@ -158,7 +158,7 @@ class Detect:
         return 0
 
 
-    def maketeble(self):
+    def maketeble(self, size, full_size, size2, full_size2, centre, bright2, widht, hight):
         self.workbook = Workbook()  # create MS Excel table
         sheet = self.workbook.active
         sheet["A1"] = "id"
@@ -176,6 +176,8 @@ class Detect:
         sheet["M1"] = "Value - bigger is better"
         sheet["N1"] = "Bright (RGB)"
         sheet["O1"] = "Height (Å)"
+        sheet["P1"] = "Size X (um)"
+        sheet["Q1"] = "Size Y (um)"
 
         for index in range(1, len(self.anything)):
             # fill Excel table
@@ -186,34 +188,36 @@ class Detect:
             sheet.row_dimensions[index + 1].height = img2.height * 0.8
 
             sheet[f"A{index + 1}"] = index
-            sheet[f"B{index + 1}"] = globals()[f"flakes{index}"].centre[0] * self.calibration
-            sheet[f"C{index + 1}"] = globals()[f"flakes{index}"].centre[1] * self.calibration
-            sheet[f"D{index + 1}"] = globals()[f"flakes{index}"].full_size2 * self.calibration ** 2
-            sheet[f"E{index + 1}"] = 1 - globals()[f"flakes{index}"].size2 / globals()[f"flakes{index}"].full_size2
-            sheet[f"F{index + 1}"] = max(((-globals()[f"flakes{index}"].size2 - (globals()[f"flakes{index}"].size2 ** 2
-                    - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5) / 4) / (4 * globals()[f"flakes{index}"].full_size2 /
-                    (-globals()[f"flakes{index}"].size2 - (globals()[f"flakes{index}"].size2 ** 2 - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5)),
-                                         (4 * globals()[f"flakes{index}"].full_size2 / (-globals()[f"flakes{index}"].size2
-                                        - (globals()[f"flakes{index}"].size2 ** 2 - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5)) / (
-                                        (-globals()[f"flakes{index}"].size2 - (globals()[f"flakes{index}"].size2 ** 2
-                                        - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5) / 4))
-            sheet[f"H{index + 1}"] = globals()[f"flakes{index}"].size
-            sheet[f"I{index + 1}"] = globals()[f"flakes{index}"].full_size
-            if 3.5 < globals()[f"flakes{index}"].full_size / globals()[f"flakes{index}"].size < 5:
+            sheet[f"B{index + 1}"] = centre[index][0] * self.calibration
+            sheet[f"C{index + 1}"] = centre[index][1] * self.calibration
+            sheet[f"D{index + 1}"] = full_size2[index] * self.calibration ** 2
+            sheet[f"E{index + 1}"] = 1 - size2[index] / full_size2[index]
+            sheet[f"F{index + 1}"] = max(((-size2[index] - (size2[index] ** 2
+                    - 16 * full_size2[index]) ** 0.5) / 4) / (4 * full_size2[index] /
+                    (-size2[index] - (size2[index] ** 2 - 16 * full_size2[index]) ** 0.5)),
+                                         (4 * full_size2[index] / (-size2[index]
+                                        - (size2[index] ** 2 - 16 * full_size2[index]) ** 0.5)) / (
+                                        (-size2[index] - (size2[index] ** 2
+                                        - 16 * full_size2[index]) ** 0.5) / 4))
+            sheet[f"H{index + 1}"] = size[index]
+            sheet[f"I{index + 1}"] = full_size[index]
+            if 3.5 < full_size[index] / size[index] < 5:
                 sheet[f"J{index + 1}"] = "OK"
-                sheet[f"K{index + 1}"] = abs(globals()[f"flakes{index}"].full_size / globals()[f"flakes{index}"].size - (3.5 + 5) / 2)
+                sheet[f"K{index + 1}"] = abs(full_size[index] / size[index] - (3.5 + 5) / 2)
             else:
                 sheet[f"J{index + 1}"] = "NO"
-            if 0.08 < 1 - globals()[f"flakes{index}"].size2 / globals()[f"flakes{index}"].full_size2:
+            if 0.08 < 1 - size2[index] / full_size2[index]:
                 sheet[f"L{index + 1}"] = "OK"
-                sheet[f"M{index + 1}"] = abs(1 - globals()[f"flakes{index}"].size2 / globals()[f"flakes{index}"].full_size2) - 0.08
+                sheet[f"M{index + 1}"] = abs(1 - size2[index] / full_size2[index]) - 0.08
             else:
                 sheet[f"L{index + 1}"] = "NO"
 
-            sheet[f"N{index + 1}"] = globals()[f"flakes{index}"].bright2 / globals()[f"flakes{index}"].size2
-            sheet[f"O{index + 1}"] = 20 * globals()[f"flakes{index}"].bright2 / globals()[f"flakes{index}"].size2 - 6940
-            if self.max_width < globals()[f"flakes{index}"].widht:
-                self.max_width = globals()[f"flakes{index}"].widht
+            sheet[f"N{index + 1}"] = bright2[index] / size2[index]
+            sheet[f"O{index + 1}"] = 20 * bright2[index] / size2[index] - 6940
+            sheet[f"P{index + 1}"] = widht[index] * self.calibration
+            sheet[f"Q{index + 1}"] = hight[index] * self.calibration
+            if self.max_width < widht[index]:
+                self.max_width = widht[index]
         sheet = self.workbook.active
         sheet.column_dimensions['G'].width = self.max_width * 0.15
         self.workbook.save(f"{self.path}/output/Catalogue_{self.name}.xlsx")  # save Excel table

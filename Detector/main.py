@@ -2,7 +2,7 @@ from openpyxl import Workbook
 import cv2
 import os
 import shutil
-from find_objects import Detect, Proces
+from .find_objects import Detect, Proces
 
 
 def take_webcam_image(path: str, filename: str):
@@ -175,8 +175,14 @@ def main():
         globals()[f"flakes{q}"].mark_object()
         globals()[f"flakes{q}"].measure()
         # Process one object and write the width of the photo of the object for set width of the column in Excel table.
-    figure1.maketeble() # Finish and save the table.
-
+    figure1.maketeble([globals()[f"flakes{index}"].size for index in range(len(figure1.anything))],
+                      [globals()[f"flakes{index}"].full_size for index in range(len(figure1.anything))],
+                      [globals()[f"flakes{index}"].size2 for index in range(len(figure1.anything))],
+                      [globals()[f"flakes{index}"].full_size2 for index in range(len(figure1.anything))],
+                      [globals()[f"flakes{index}"].centre for index in range(len(figure1.anything))],
+                      [globals()[f"flakes{index}"].bright2 for index in range(len(figure1.anything))],
+                      [globals()[f"flakes{index}"].width for index in range(len(figure1.anything))],
+                      [globals()[f"flakes{index}"].hight for index in range(len(figure1.anything))]) # Finish and save the table.
+    figure1.clean()
     input("\nThe task has been finished. Press some key for close a script.")
 
-main()
