@@ -6,8 +6,11 @@ import cv2
 import shutil
 import os
 
-def gamma_correct(im, gamma):
-    gamma1 = gamma
+def gamma_correct(im, gamma1: float):
+    '''
+    Change the gamma of a picture. The fistr parametr is a photo and second parametr is a gamma parametr.
+    The formala of function is?: new_RGB = ((RGB / 255)^(1 / gamma)) * 255.
+    '''
     row = im.size[0]
     col = im.size[1]
     result_img1 = Image.new(mode="RGB", size=(row, col), color=0)
@@ -22,15 +25,22 @@ def gamma_correct(im, gamma):
 
 
 def change_contrast(img, level):
+    '''
+    Change the gamma of a picture. The fistr parametr is a photo and second parametr is a contrast parametr.
+    The formala of function is?: new_RGB = 128 + (259 * (contrast + 255)) / (255 * (259 - contrast)) * (RGB - 128).
+    '''
     factor = (259 * (level + 255)) / (255 * (259 - level))
     def contrast(c):
         return 128 + factor * (c - 128)
     return img.point(contrast)
 
 
-class Flakes:
-    # Functions to detecting flakes.
-    def __init__(self, path, name, out1, min_size, sensitivity, calibration):
+class Detect:
+    '''
+    Functions to detecting flakes.
+    Longer description is needed!
+    '''
+    def __init__(self, path: str, name: str, out1: bool, min_size: float, sensitivity: int, calibration: float):
         self.path = path
         self.workbook = 0
         self.name = name
@@ -39,7 +49,6 @@ class Flakes:
         self.sensitivity = sensitivity
         self.calibration = calibration
         self.anything = []
-        self.candidates = []
         self.max_width = 0
 
     def find_objects(self):
@@ -148,19 +157,9 @@ class Flakes:
 
         return 0
 
-    def candidate(self):
-        # Set area for finding object in high resolution
-        self.candidates = []  # (x_min, x_max, y_min, y_max)
-        for q in self.anything:
-            x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
-                                          int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
-            if (x_max - x_min) * (y_max - y_min) < 50000:
-                self.candidates.append((x_min, x_max, y_min, y_max))
-        return 0
 
-    def prepareteble(self):
+    def maketeble(self):
         self.workbook = Workbook()  # create MS Excel table
-
         sheet = self.workbook.active
         sheet["A1"] = "id"
         sheet["B1"] = "x (um)"
@@ -178,39 +177,113 @@ class Flakes:
         sheet["N1"] = "Bright (RGB)"
         sheet["O1"] = "Height (Å)"
 
+        for index in range(1, len(self.anything)):
+            # fill Excel table
+            sheet = self.workbook.active
+            img = Xl(f'{self.path}/output/objects/{self.name}_object{index}.png')
+            sheet.add_image(img, f'G{index + 1}')
+            img2 = Image.open(f'{self.path}/output/objects/{self.name}_object{index}.png')
+            sheet.row_dimensions[index + 1].height = img2.height * 0.8
+
+            sheet[f"A{index + 1}"] = index
+            sheet[f"B{index + 1}"] = globals()[f"flakes{index}"].centre[0] * self.calibration
+            sheet[f"C{index + 1}"] = globals()[f"flakes{index}"].centre[1] * self.calibration
+            sheet[f"D{index + 1}"] = globals()[f"flakes{index}"].full_size2 * self.calibration ** 2
+            sheet[f"E{index + 1}"] = 1 - globals()[f"flakes{index}"].size2 / globals()[f"flakes{index}"].full_size2
+            sheet[f"F{index + 1}"] = max(((-globals()[f"flakes{index}"].size2 - (globals()[f"flakes{index}"].size2 ** 2
+                    - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5) / 4) / (4 * globals()[f"flakes{index}"].full_size2 /
+                    (-globals()[f"flakes{index}"].size2 - (globals()[f"flakes{index}"].size2 ** 2 - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5)),
+                                         (4 * globals()[f"flakes{index}"].full_size2 / (-globals()[f"flakes{index}"].size2
+                                        - (globals()[f"flakes{index}"].size2 ** 2 - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5)) / (
+                                        (-globals()[f"flakes{index}"].size2 - (globals()[f"flakes{index}"].size2 ** 2
+                                        - 16 * globals()[f"flakes{index}"].full_size2) ** 0.5) / 4))
+            sheet[f"H{index + 1}"] = globals()[f"flakes{index}"].size
+            sheet[f"I{index + 1}"] = globals()[f"flakes{index}"].full_size
+            if 3.5 < globals()[f"flakes{index}"].full_size / globals()[f"flakes{index}"].size < 5:
+                sheet[f"J{index + 1}"] = "OK"
+                sheet[f"K{index + 1}"] = abs(globals()[f"flakes{index}"].full_size / globals()[f"flakes{index}"].size - (3.5 + 5) / 2)
+            else:
+                sheet[f"J{index + 1}"] = "NO"
+            if 0.08 < 1 - globals()[f"flakes{index}"].size2 / globals()[f"flakes{index}"].full_size2:
+                sheet[f"L{index + 1}"] = "OK"
+                sheet[f"M{index + 1}"] = abs(1 - globals()[f"flakes{index}"].size2 / globals()[f"flakes{index}"].full_size2) - 0.08
+            else:
+                sheet[f"L{index + 1}"] = "NO"
+
+            sheet[f"N{index + 1}"] = globals()[f"flakes{index}"].bright2 / globals()[f"flakes{index}"].size2
+            sheet[f"O{index + 1}"] = 20 * globals()[f"flakes{index}"].bright2 / globals()[f"flakes{index}"].size2 - 6940
+            if self.max_width < globals()[f"flakes{index}"].widht:
+                self.max_width = globals()[f"flakes{index}"].widht
+        sheet = self.workbook.active
+        sheet.column_dimensions['G'].width = self.max_width * 0.15
+        self.workbook.save(f"{self.path}/output/Catalogue_{self.name}.xlsx")  # save Excel table
         return 0
 
-    def process_object(self, index):
 
-        pim = Image.open(f'{self.path}/output/org_gc.png')  # open corrected original photo
-        org = pim.load()
+    def clean(self):
+        if self.out1 == 0:
+            shutil.rmtree(os.path.join(self.path, "output\\objects"))
+        return 0
 
-        nw = Image.new('RGB', (self.candidates[index][1] - self.candidates[index][0] + 8, self.candidates[index][3] - self.candidates[index][2] + 8),
+
+class Proces:
+    def __init__(self, path: str, name: str, out1: bool, min_size: float, sensitivity: int, calibration: float, num: int, coordinates: (int, int, int, int)):
+        self.path = path
+        self.name = name
+        self.out1 = out1
+        self.min_size = min_size
+        self.sensitivity = sensitivity
+        self.calibration = calibration
+        self.id = num
+        self.coordinates = coordinates
+        self.pim = 0
+        self.org = 0
+        self.nw = 0
+        self.new = 0
+        self.ts = 0
+        self.test = 0
+        self.bright2 = 0
+        self.centre = (0, 0)
+        self.size = 0
+        self.full_size = 0
+        self.size2 = 0
+        self.full_size2 = 0
+        self.width = 0
+        self.hight = 0
+
+    def load_image(self):
+        self.pim = Image.open(f'{self.path}/output/org_gc.png')  # open corrected original photo
+        self.org = self.pim.load()
+
+        self.nw = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
+                               self.coordinates[3] - self.coordinates[2] + 8),
                        color='white')  # vytvoreni noveho obrazku
-        new = nw.load()
-        ts = Image.new('RGB', (self.candidates[index][1] - self.candidates[index][0] + 8, self.candidates[index][3] - self.candidates[index][2] + 8),
+        self.new = self.nw.load()
+        self.ts = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
+                               self.coordinates[3] - self.coordinates[2] + 8),
                        color='white')  # vytvoreni noveho obrazku
-        test = ts.load()
+        self.test = self.ts.load()
+        return 0
 
+    def mark_object(self):
         detect2 = []
-        bright2 = 0
 
-        for i in range(self.candidates[index][0] - 4, self.candidates[index][1] + 4):
-            for j in range(self.candidates[index][2] - 4, self.candidates[index][3] + 4):
-                R, G, B = org[i, j]
-                new[i - self.candidates[index][0] - 1 + 5, j - self.candidates[index][2] - 1 + 5] = org[i, j]
-                bright2 += R + G + B
+        for i in range(self.coordinates[0] - 4, self.coordinates[1] + 4):
+            for j in range(self.coordinates[2] - 4, self.coordinates[3] + 4):
+                R, G, B = self.org[i, j]
+                self.new[i - self.coordinates[0] - 1 + 5, j - self.coordinates[2] - 1 + 5] = self.org[i, j]
+                self.bright2 += R + G + B
                 if R > self.sensitivity or G > self.sensitivity or B > self.sensitivity:
-                    org[i, j] = (256, 0, 0)
-        nw.save(f'{self.path}/output/objects/{self.name}_object{index}.png')  # storage image n-th objects
+                    self.org[i, j] = (256, 0, 0)
+        self.nw.save(f'{self.path}/output/objects/{self.name}_object{self.id}.png')  # storage image n-th objects
 
-        for i in range(self.candidates[index][0] - 4, self.candidates[index][1] - 1 + 4, 2):
-            for j in range(self.candidates[index][2] - 4, self.candidates[index][3] - 1 + 4, 2):
+        for i in range(self.coordinates[0] - 4, self.coordinates[1] - 1 + 4, 2):
+            for j in range(self.coordinates[2] - 4, self.coordinates[3] - 1 + 4, 2):
                 red = 0
                 px = 0
                 for k in range(i - 1, i + 1):
                     for l in range(j - 1, j + 1):
-                        if org[k, l] == (255, 0, 0):
+                        if self.org[k, l] == (255, 0, 0):
                             red += 1
                         px += 1
                 if px != 0:
@@ -219,7 +292,7 @@ class Flakes:
 
         detect2 = np.array(detect2)
 
-        anything2 = []
+        self.anything2 = []
 
         i = 0
         while len(detect2) > 0:
@@ -242,53 +315,53 @@ class Flakes:
                             detect2 = detect2[~mask]
                             b = 1
 
-            anything2.append(queue)
+            self.anything2.append(queue)
             i += 1
 
-        for obj in anything2.copy():
+        for obj in self.anything2.copy():
             if len(obj) <= self.min_size:
-                anything2.remove(obj)
+                self.anything2.remove(obj)
 
-        best = 0
-        if len(anything2) == 1:
-            for n in anything2:
+        self.best = 0
+        if len(self.anything2) == 1:
+            for n in self.anything2:
                 for (i, j) in n:
                     for k in range(i - 1, i + 1):
                         for l in range(j - 1, j + 1):
-                            test[k - self.candidates[index][0] - 1 + 5, l - self.candidates[index][2] - 1 + 5] = (256, 0, 0)
-        elif len(anything2) > 1:
-            mx = max(len(x) for x in anything2)
-            for n in anything2:
+                            self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (256, 0, 0)
+        elif len(self.anything2) > 1:
+            mx = max(len(x) for x in self.anything2)
+            for n in self.anything2:
                 if len(n) == mx:
-                    best = n
+                    self.best = n
                     for (i, j) in n:
                         for k in range(i - 1, i + 1):
                             for l in range(j - 1, j + 1):
-                                test[k - self.candidates[index][0] - 1 + 5, l - self.candidates[index][2] - 1 + 5] = (256, 0, 0)
+                                self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (
+                                256, 0, 0)
+        return 0
 
-        centre = ((int(sum(x for (x, y) in anything2[best]) / len(anything2[best])),
-                   int(sum(y for (x, y) in anything2[best]) / len(anything2[best]))))
+    def measure(self):
+        self.centre = ((int(sum(x for (x, y) in self.anything2[self.best]) / len(self.anything2[self.best])),
+                   int(sum(y for (x, y) in self.anything2[self.best]) / len(self.anything2[self.best]))))
 
         # mark shapes of image
-        shape = Image.open(f'{self.path}/output/objects/{self.name}_object{index}.png')
+        shape = Image.open(f'{self.path}/output/objects/{self.name}_object{self.id}.png')
         shape = gamma_correct(shape, 1.5)
         shape = change_contrast(shape, 100)
-        shape.save(f'{self.path}/output/objects/{self.name}_object{index}_proc1.png')
+        shape.save(f'{self.path}/output/objects/{self.name}_object{self.id}_proc1.png')
 
-        shape = cv2.imread(f'{self.path}/output/objects/{self.name}_object{index}_proc1.png')
+        shape = cv2.imread(f'{self.path}/output/objects/{self.name}_object{self.id}_proc1.png')
         shape = cv2.cvtColor(shape, cv2.COLOR_BGR2RGB)
         shape = cv2.addWeighted(shape, 4, shape, 0, 0)
         shape = cv2.cvtColor(shape, cv2.COLOR_BGR2GRAY)
         shape = cv2.Canny(shape, 300, 100)
-        cv2.imwrite(f'{self.path}/output/objects/{self.name}_object{index}_proc2.png', shape)
+        cv2.imwrite(f'{self.path}/output/objects/{self.name}_object{self.id}_proc2.png', shape)
 
-        prc = Image.open(f'{self.path}/output/objects/{self.name}_object{index}_proc2.png')  # open corrected original photo
+        prc = Image.open(f'{self.path}/output/objects/{self.name}_object{self.id}_proc2.png')  # open corrected original photo
         pc = prc.load()
 
         # calculate size of the object (new)
-        size = 0
-        full_size = 0
-
         x_min = x_max = 0
         for i in range(prc.size[0]):
             white = 0
@@ -296,76 +369,34 @@ class Flakes:
                 W = pc[i, j]
                 if W == 255 and white == 0:
                     white = 1
-                    size += 1
+                    self.size += 1
                     x_min = j
                 elif W == 255 and white == 1:
-                    size += 1
+                    self.size += 1
                     x_max = j
-            full_size += (x_max - x_min)
+            self.full_size += (x_max - x_min)
             x_min = x_max = 0
 
         # calculate size of the object (old)
-        size2 = 0
-        full_size2 = 0
-
         x_min = x_max = 0
-        for i in range(ts.size[0] - 3):
+        for i in range(self.ts.size[0] - 3):
             red = 0
-            for j in range(ts.size[1] - 3):
-                R, G, B = test[i, j]
+            for j in range(self.ts.size[1] - 3):
+                R, G, B = self.test[i, j]
                 if (R, G, B) == (255, 0, 0) and red == 0:
                     red = 1
-                    size2 += 1
+                    self.size2 += 1
                     x_min = j
                 elif (R, G, B) == (255, 0, 0) and red == 1:
-                    size2 += 1
+                    self.size2 += 1
                     x_max = j
-            full_size2 += (x_max - x_min)
+            self.full_size2 += (x_max - x_min)
             x_min = x_max = 0
 
         if self.out1 == 1:
-            ts.save(f'{self.path}/output/objects/{self.name}_object{index}_proc0.png')  # store photo of area of detect object
+            self.ts.save(
+                f'{self.path}/output/objects/{self.name}_object{self.id}_proc0.png')  # store photo of area of detect object
 
-        # fill Excel table
-        sheet = self.workbook.active
-        img = Xl(f'{self.path}/output/objects/{self.name}_object{index}.png')
-        sheet.add_image(img, f'G{index + 1}')
-        img2 = Image.open(f'{self.path}/output/objects/{self.name}_object{index}.png')
-        sheet.row_dimensions[index + 1].height = img2.height * 0.8
-
-        sheet[f"A{index + 1}"] = index
-        sheet[f"B{index + 1}"] = centre[0] * self.calibration
-        sheet[f"C{index + 1}"] = centre[1] * self.calibration
-        sheet[f"D{index + 1}"] = full_size2 * self.calibration ** 2
-        sheet[f"E{index + 1}"] = 1 - size2 / full_size2
-        sheet[f"F{index + 1}"] = max(((-size2 - (size2 ** 2 - 16 * full_size2) ** 0.5) / 4) / (
-                4 * full_size2 / (-size2 - (size2 ** 2 - 16 * full_size2) ** 0.5)),
-                                 (4 * full_size2 / (-size2 - (size2 ** 2 - 16 * full_size2) ** 0.5)) / (
-                                         (-size2 - (size2 ** 2 - 16 * full_size2) ** 0.5) / 4))
-        sheet[f"H{index + 1}"] = size
-        sheet[f"I{index + 1}"] = full_size
-        if 3.5 < full_size / size < 5:
-            sheet[f"J{index + 1}"] = "OK"
-            sheet[f"K{index + 1}"] = abs(full_size / size - (3.5 + 5) / 2)
-        else:
-            sheet[f"J{index + 1}"] = "NO"
-        if 0.08 < 1 - size2 / full_size2:
-            sheet[f"L{index + 1}"] = "OK"
-            sheet[f"M{index + 1}"] = abs(1 - size2 / full_size2) - 0.08
-        else:
-            sheet[f"L{index + 1}"] = "NO"
-
-        sheet[f"N{index + 1}"] = bright2 / size2
-        sheet[f"O{index + 1}"] = 20 * bright2 / size2 - 6940
-
-        if self.max_width < img2.width:
-            self.max_width = img2.width
-        return 0
-
-    def finishtable(self):
-        sheet = self.workbook.active
-        sheet.column_dimensions['G'].width = self.max_width * 0.15
-        self.workbook.save(f"{self.path}/output/Catalogue_{self.name}.xlsx")  # save Excel table
-        if self.out1 == 0:
-            shutil.rmtree(os.path.join(self.path, "output\\objects"))
+        self.width = self.nw.width
+        self.hight = self.nw.height
         return 0
