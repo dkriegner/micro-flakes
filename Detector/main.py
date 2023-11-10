@@ -3,6 +3,7 @@ import cv2
 import os
 import shutil
 from .find_objects import Detect, Proces
+import argparse
 
 
 def take_webcam_image(path: str, filename: str):
@@ -31,7 +32,7 @@ def take_webcam_image(path: str, filename: str):
             break
     cap.release()
     cv2.destroyAllWindows()
-    return 0
+    return None
 
 def float_question(question: str, default: float | None = None) -> float:
     """get float answer for a question."""
@@ -145,7 +146,21 @@ def main():
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample
 
-    path, name, out1, min_size, sensitivity = dialog() # Print a welcome screen and ask user's inputs
+    # Load a set parameters via command line parameters
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("path")
+    parser.add_argument("name")
+    parser.add_argument("out1")
+    parser.add_argument("min_size")
+    parser.add_argument("sensitivity")
+
+    args = parser.parse_args()
+
+    path, name, out1, min_size, sensitivity = (args.path, args.name, args.out1, args.min_size, args.sensitivity)
+
+    if path == 0:
+        path, name, out1, min_size, sensitivity = dialog() # Print a welcome screen and ask user's inputs
 
     print("The first iteration:")
     # Find objects in the photo in low resolution

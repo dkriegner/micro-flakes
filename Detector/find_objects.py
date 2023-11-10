@@ -52,6 +52,7 @@ class Detect:
         self.max_width = 0
 
     def find_objects(self):
+        '''It finds and marks all object in the photo.'''
         pim = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
         print("The photo has been opened.")
 
@@ -155,10 +156,11 @@ class Detect:
         pim.close()
         nw.close()
 
-        return 0
+        return None
 
 
     def maketeble(self, size, full_size, size2, full_size2, centre, bright2, widht, hight):
+        '''It create a teble with all objects from Process.'''
         self.workbook = Workbook()  # create MS Excel table
         sheet = self.workbook.active
         sheet["A1"] = "id"
@@ -221,16 +223,17 @@ class Detect:
         sheet = self.workbook.active
         sheet.column_dimensions['G'].width = self.max_width * 0.15
         self.workbook.save(f"{self.path}/output/Catalogue_{self.name}.xlsx")  # save Excel table
-        return 0
+        return None
 
 
     def clean(self):
         if self.out1 == 0:
             shutil.rmtree(os.path.join(self.path, "output\\objects"))
-        return 0
+        return None
 
 
 class Proces:
+    '''It makes the measurment of object which is detected in Detect. You get coordinates, size, images of object.'''
     def __init__(self, path: str, name: str, out1: bool, min_size: float, sensitivity: int, calibration: float, num: int, coordinates: (int, int, int, int)):
         self.path = path
         self.name = name
@@ -256,6 +259,7 @@ class Proces:
         self.hight = 0
 
     def load_image(self):
+        '''Crop original image and make output images.'''
         self.pim = Image.open(f'{self.path}/output/org_gc.png')  # open corrected original photo
         self.org = self.pim.load()
 
@@ -267,9 +271,10 @@ class Proces:
                                self.coordinates[3] - self.coordinates[2] + 8),
                        color='white')  # vytvoreni noveho obrazku
         self.test = self.ts.load()
-        return 0
+        return None
 
     def mark_object(self):
+        '''Detect object in higth resolution and delete too small objects.'''
         detect2 = []
 
         for i in range(self.coordinates[0] - 4, self.coordinates[1] + 4):
@@ -343,9 +348,10 @@ class Proces:
                             for l in range(j - 1, j + 1):
                                 self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (
                                 256, 0, 0)
-        return 0
+        return None
 
     def measure(self):
+        '''Measure coordinates, size, hight of a object.'''
         self.centre = ((int(sum(x for (x, y) in self.anything2[self.best]) / len(self.anything2[self.best])),
                    int(sum(y for (x, y) in self.anything2[self.best]) / len(self.anything2[self.best]))))
 
@@ -403,4 +409,4 @@ class Proces:
 
         self.width = self.nw.width
         self.hight = self.nw.height
-        return 0
+        return None
