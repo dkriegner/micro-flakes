@@ -6,6 +6,7 @@ from .find_objects import ImageCrawler
 from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
 import argparse
 
+
 def dialog() -> (str, str, bool, float, int):
     '''Ask the user to input parameters'''
     print("Welcome in software to automatics detect object in microscope.")
@@ -57,21 +58,23 @@ def line_command() -> (str, str, bool, float, int):
     # Load a set parameters via command line parameters
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("path",
+    parser.add_argument("-p", "--path",
+    nargs='?', const='Nothing',
     help="The path where input and output folder is or will be created.",
     type=str)
-    parser.add_argument("name",
+    parser.add_argument("-n", "--name",
+    nargs='?', const='Nothing',
     help="The name of the input image",
     type=str)
-    parser.add_argument("out1",
+    parser.add_argument("-o", "--out1",
     default=False,
     help="Do you want output images? Yes -> True, No -> False",
     type=bool)
-    parser.add_argument("min_size",
+    parser.add_argument("-m", "--min_size",
     default= 42.4/1.6952,
     help="Write minimal area of edge of object in um^2. Smaller object will be deleted. Default is 42.4 um.",
     type=float)
-    parser.add_argument("sensitivity",
+    parser.add_argument("-s", "--sensitivity",
     default=40,
     help="Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input. Default is 40",
     type=int)
@@ -83,13 +86,12 @@ def line_command() -> (str, str, bool, float, int):
 def main():
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample
-    try:
-        path, name, out1, min_size, sensitivity = line_command() # Try to read a line-command input.
-    except:
+
+    path, name, out1, min_size, sensitivity = line_command() # Try to read a line-command input.
+
+    if path is None:
         path, name, out1, min_size, sensitivity = dialog() # Print a welcome screen and ask user's inputs
 
     figure1 = ImageCrawler(path, name, out1, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")
-
-
