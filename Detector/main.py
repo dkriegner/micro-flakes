@@ -6,7 +6,6 @@ from .find_objects import ImageCrawler
 from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
 import argparse
 
-
 def dialog() -> (str, str, bool, float, int):
     '''Ask the user to input parameters'''
     print("Welcome in software to automatics detect object in microscope.")
@@ -41,7 +40,7 @@ def dialog() -> (str, str, bool, float, int):
         print(os.listdir(f"{path}/input/"))
         print("Write name of photo from microscope.")
         name = input("input/")
-        while not os.path.exists(f"{path}/input/{name}"):  # check if the file exists
+        while not os.path.exists(f"{path}/input/{name}") or name == "":  # check if the file exists
             print("Error! The file doesn't exist.")
             name = input("input/")  # ask for a new input
 
@@ -89,9 +88,11 @@ def main():
 
     path, name, out1, min_size, sensitivity = line_command() # Try to read a line-command input.
 
-    if path is None:
+    if path == None:
         path, name, out1, min_size, sensitivity = dialog() # Print a welcome screen and ask user's inputs
 
     figure1 = ImageCrawler(path, name, out1, min_size, sensitivity, calibration)
+    #print(figure1[0].size)
 
     input("\nThe task has been finished. Press some key for close a script.")
+

@@ -76,6 +76,7 @@ class ImageCrawler(list):
             if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
                 self.append(Flake(self, index,(x_min, x_max, y_min, y_max)))
 
+        #print(self[0].size)
         catalogue = ExcelOutput(self)
 
         if not out1 == 1:
@@ -194,7 +195,7 @@ class ImageCrawler(list):
 
         return None
 
-    def clean(self):
+    def _clean(self):
         shutil.rmtree(os.path.join(self.path, "output\\objects"))
 
         return None
@@ -214,6 +215,7 @@ class Flake:
         self.full_size2 = 0
         self.width = 0
         self.hight = 0
+        self.calib = parent.calibration
 
         print(f"{self.id + 1}, ", end="")
         self.edit_orig_photo, self.output, self.output2 = self._load_image2(parent.path)
@@ -380,19 +382,19 @@ class Flake:
 
     @property
     def pos_x(self):
-        return self.centre[0] * parent.calibration
+        return self.centre[0] * self.calib
 
     @property
     def pos_y(self):
-        return self.centre[1] * parent.calibration
+        return self.centre[1] * self.calib
 
     @property
     def area(self):
-        return full_size2 * self.calibration ** 2
+        return self.full_size2 * self.calib ** 2
 
     @property
     def sizeX(self):
-        return  self.widht
+        return  self.width
 
     @property
     def sizeY(self):
@@ -400,28 +402,26 @@ class Flake:
 
     @property
     def transparency(self):
-        return  1 - size2 / full_size2
+        return  1 - self.size2 / self.full_size2
 
     @property
     def bright(self):
-        return bright2 / size2
+        return self.bright2 / self.size2
 
     @property
     def height(self):
-        return  20 * bright2 / size2 - 6940
+        return  20 * self.bright2 / self.size2 - 6940
 
     @property
     def ratio(self):
-        return max(((-size2 - (size2 ** 2
-                           - 16 * full_size2) ** 0.5) / 4) / (
-                4 * full_size2 /
-                (-size2 - (size2 ** 2 - 16 * full_size2[
-                    index]) ** 0.5)),
-        (4 * full_size2 / (-size2
-                                  - (size2 ** 2 - 16 * full_size2[
-                    index]) ** 0.5)) / (
-                (-size2 - (size2 ** 2
-                                  - 16 * full_size2) ** 0.5) / 4))
+        return max(((-self.size2 - (self.size2 ** 2
+                           - 16 * self.full_size2) ** 0.5) / 4) / (
+                4 * self.full_size2 /
+                (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)),
+        (4 * self.full_size2 / (-self.size2
+                                  - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)) / (
+                (-self.size2 - (self.size2 ** 2
+                                  - 16 * self.full_size2) ** 0.5) / 4))
 
 
 class ExcelOutput:
@@ -430,53 +430,52 @@ class ExcelOutput:
         self.workbook = Workbook()
         self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx"
         self._generate_metadata_header()
-        self._generate_object_table(image.marked_objects)
+
+        self._generate_object_table(image.marked_objects, image)
         self._save_to_disk(self.filename)
 
     def _generate_metadata_header(self):
         """Insert general information (min_size, sensitivity, calibration)"""
 
-        def maketeble(self, size, full_size, size2, full_size2, centre, bright2, widht, hight):
-            '''It create a teble with all objects from Process.'''
-            self.workbook = Workbook()  # create MS Excel table
-            sheet = self.workbook.active
-            sheet["A1"] = "id"
-            sheet["B1"] = "x (um)"
-            sheet["C1"] = "y (um)"
-            sheet["D1"] = "size (um^2)"
-            sheet["E1"] = "Size X (um)"
-            sheet["F1"] = "Size Y (um)"
-            sheet["G1"] = "transparency (%)"
-            sheet["H1"] = "Bright (RGB)"
-            sheet["I1"] = "Height (Å)"
-            sheet["J1"] = "size ratio"
-            sheet["K1"] = "photo"
-            sheet["L1"] = "contourI"
-            sheet["M1"] = "contourII"
-            sheet["N1"] = "filter - contour"  # Does the object have a constant contour?  3,5 (3,7) - 5
-            sheet["O1"] = "Value - bigger is better"
-            sheet["P1"] = "filter - transparency"  # Is the object transparent?  >0,1 (0,08)
-            sheet["Q1"] = "Value - bigger is better"
+        sheet = self.workbook.active
+        sheet["A1"] = "id"
+        sheet["B1"] = "x (um)"
+        sheet["C1"] = "y (um)"
+        sheet["D1"] = "size (um^2)"
+        sheet["E1"] = "Size X (um)"
+        sheet["F1"] = "Size Y (um)"
+        sheet["G1"] = "transparency (%)"
+        sheet["H1"] = "Bright (RGB)"
+        sheet["I1"] = "Height (Å)"
+        sheet["J1"] = "size ratio"
+        sheet["K1"] = "photo"
+        sheet["L1"] = "contourI"
+        sheet["M1"] = "contourII"
+        sheet["N1"] = "filter - contour"  # Does the object have a constant contour?  3,5 (3,7) - 5
+        sheet["O1"] = "Value - bigger is better"
+        sheet["P1"] = "filter - transparency"  # Is the object transparent?  >0,1 (0,08)
+        sheet["Q1"] = "Value - bigger is better"
 
-            return None
+        return None
 
-    def _generate_object_table(self, objects):
+    def _generate_object_table(self, objects, image):
         """Insert object table header and contenct"""
         # generate header ...
         # iterate over all flakes
         sheet = self.workbook.active
-        for index, flake in enumerate(objects):
+        max_width = 0
+        for index in range(len(objects)):
             # fill Excel table
-            sheet[f"A{index + 1}"] = index
-            sheet[f"B{index + 1}"] = flake.pos_x
-            sheet[f"C{index + 1}"] = flake.pos_y
-            sheet[f"D{index + 1}"] = flake.area
-            sheet[f"E{index + 1}"] = flake.sizeX
-            sheet[f"F{index + 1}"] = flake.sizeY
-            sheet[f"G{index + 1}"] = flake.transparency
-            sheet[f"H{index + 1}"] = flake.bright
-            sheet[f"I{index + 1}"] = flake.height
-            sheet[f"J{index + 1}"] = flake.ratio
+            sheet[f"A{index + 2}"] = index
+            sheet[f"B{index + 2}"] = image[index].pos_x
+            sheet[f"C{index + 2}"] = image[index].pos_y
+            sheet[f"D{index + 2}"] = image[index].area
+            sheet[f"E{index + 2}"] = image[index].sizeX
+            sheet[f"F{index + 2}"] = image[index].sizeY
+            sheet[f"G{index + 2}"] = image[index].transparency
+            sheet[f"H{index + 2}"] = image[index].bright
+            sheet[f"I{index + 2}"] = image[index].height
+            sheet[f"J{index + 2}"] = image[index].ratio
 
 
             img = Xl(f"{image.path}/output/objects/{image.name}_object{index}.png")
@@ -497,12 +496,11 @@ class ExcelOutput:
                 sheet[f"M{index + 1}"] = abs(1 - size2[index] / full_size2[index]) - 0.08
             else:
                 sheet[f"L{index + 1}"] = "NO"
-
-            if self.max_width < widht[index]:
-                self.max_width = widht[index]
             '''
+            if max_width < img2.size[0]:
+                max_width = img2.size[0]
 
-        sheet.column_dimensions['G'].width = self.max_width * 0.15
+        sheet.column_dimensions['K'].width = max_width * 0.15
 
         # and much more...
 
