@@ -24,7 +24,7 @@ def gamma_correct(im, gamma1: float):
     return result_img1
 
 
-def change_contrast(img, level):
+def change_contrast(img, level: float):
     '''
     Change the gamma of a picture. The fistr parametr is a photo and second parametr is a contrast parametr.
     The formala of function is?: new_RGB = 128 + (259 * (contrast + 255)) / (255 * (259 - contrast)) * (RGB - 128).
@@ -37,31 +37,35 @@ def change_contrast(img, level):
 
 class ImageCrawler(list):
     """
-    something
-
-    Important properties of this object includes the list of all identified objects which is a list of lists of ....
-
-    The final output of identified flakes will be stored in the underlying list.
+    It loads by the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of detected object
+    with centres and area of detected edges in low resolution (self.output). It identifs objects on a artificially
+    lower resolution image and store as a list of detected flackes (self.marked_objects). Every flacke is a list of coordinates [x, y] of
+    squares 7 by 7 pixel. Every square conteins the same pixel. It is a methode how to decrease resolution. Too small
+    object is removed (objects which are contain less squares than self.min_size).
+    Than it creates a new object for each flake (Flake object). It repeats the same algorithm for finding flackes
+    from the 1st iteraction in high resolution.
     """
-    def __init__(self, path: str, name: str, out1: bool, min_size: float, sensitivity: int, calibration: float):
-        self.path = path
-        self.workbook = 0
-        self.name = name
-        self.out1 = out1
-        self.min_size = min_size
-        self.sensitivity = sensitivity
-        self.calibration = calibration
-        self.detected_object = []
-        self.max_width = 0
+    def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
+        self.name = name  # The name of an image to load
+        self.path = path  # The path of an image to load
+        self.out1 = more_output  # Look at main.py (more_output)
+        self.min_size = min_size  # Look at main.py
+        self.sensitivity = sensitivity  # Look at main.py
+        self.calibration = calibration  # Look at main.py
+        self.detected_object = [] # List of detected flackes. Every flacke is a list of coordinates [x, y]
+        self.workbook = 0  # Excel table for a new catalogue
+        self.max_width = 0  # Parameter to set a width of an image column in Excel table.
 
         print("The first iteration:")
-        # Find objects in the photo in low resolution
+        # Load an image
         self.orig_photo, self.output = self._load_image()
+        # Find objects in the photo in low resolution
         self.marked_objects = self._find_objects_low_resolution()
-        # create output photo of detected object with centres and area of detected edges
+        # create output photo of detected object with centres and area of detected edges in low resolution
         if out1 == 1:
             self._output_marked_objects()
 
+        # Close images
         self.orig_photo.close()
         self.output.close()
 
@@ -74,16 +78,18 @@ class ImageCrawler(list):
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
             #if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
+            # Create a new object for each flake. Flake() repeat the same algorithm for finding flackes from the 1st iteraction in high resolution.
             self.append(Flake(self, index,(x_min, x_max, y_min, y_max)))
 
-        #print(self[0].size)
-        catalogue = ExcelOutput(self)
+        catalogue = ExcelOutput(self) # Create a catalogue from the list of flakes in an Excel table.
 
-        if not out1 == 1:
-            self._clean()
+        if not self.out1 == 1:
+            self._clean() # Clean images of flackes in output folder.
+
+        return None
 
     def _load_image(self):
-        """Loads the image from the disk into a PIL Image object"""
+        """Loads the image from the disk into a PIL Image object. """
         '''It finds and marks all object in the photo.'''
         orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
         print("The photo has been opened.")
@@ -92,19 +98,24 @@ class ImageCrawler(list):
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
         orig_photo.save(f"{self.path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
-        #pro = orig_photo.load()
 
         # create new images for processing (object area in low resolution)
         output = Image.new('RGB', (orig_photo.size[0], orig_photo.size[1]), color='white')
-        #new = output.load()
         return orig_photo, output
 
     def _find_objects_low_resolution(self):
-        """Identify objects on a artificially lower resolution image."""
+        """
+        It marks pixel having R, G, B biger than sensitivity value. It splits the image to a matrix which is contained
+        grups 7 by 7 pixel (squares). If a square contains more than 60 % marked pixel, it is marked as marked_pixel.
+        It is a list of (x, y) coordinates of centres of squares. Than neighbour squares are connected to objects.
+        Objects is stores in marked_objects. It is a list of detected object which is represented by a list of (x, y)
+        coordinates of centres of squares. Too small objects are removed from marked_objects. The list (marked_objects)
+        is the output of this function.
+        """
         pro = self.orig_photo.load()
         new = self.output.load()
-        marked_pixel = []  # coordinates of detected object area
-        marked_objects = []
+        marked_pixel = []  # A list of (x, y) coordinates of marked squares of 7 by 7 pixels.
+        marked_objects = [] # A list of detected object which is represented by a list of (x, y) coordinates
 
         print("marking non-black area")
         for i in range(self.orig_photo.size[0] - 1):
