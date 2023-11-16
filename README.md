@@ -24,9 +24,8 @@ To run this software, Python 3 and the following libraries are required:
 - PIL
 - openpyxl
 - cv2
-- shutil
 - numpy
-- argparse
+
 To install, use the following command:
 ```
 pip install -r requirements.txt
