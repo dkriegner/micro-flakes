@@ -6,9 +6,9 @@ import cv2
 import shutil
 import os
 
-def gamma_correct(im, gamma1: float):
+def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
     '''
-    Change the gamma of a picture. The fistr parametr is a photo and second parametr is a gamma parametr.
+    Change the gamma of a picture. The first parameter is a photo and second parameter is a gamma parameter.
     The formala of function is?: new_RGB = ((RGB / 255)^(1 / gamma)) * 255.
     '''
     row = im.size[0]
@@ -24,7 +24,7 @@ def gamma_correct(im, gamma1: float):
     return result_img1
 
 
-def change_contrast(img, level: float):
+def change_contrast(img: Image.Image, level: float) -> Image.Image:
     '''
     Change the gamma of a picture. The fistr parametr is a photo and second parametr is a contrast parametr.
     The formala of function is?: new_RGB = 128 + (259 * (contrast + 255)) / (255 * (259 - contrast)) * (RGB - 128).
@@ -52,7 +52,7 @@ class ImageCrawler(list):
         self.min_size = min_size  # Look at main.py
         self.sensitivity = sensitivity  # Look at main.py
         self.calibration = calibration  # Look at main.py
-        self.detected_object = [] # List of detected flackes. Every flacke is a list of coordinates [x, y]
+        self.detected_object = [] # List of detected flakes. Every flake is a list of coordinates [x, y]
         self.workbook = 0  # Excel table for a new catalogue
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
 
@@ -78,13 +78,13 @@ class ImageCrawler(list):
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
             #if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
-            # Create a new object for each flake. Flake() repeat the same algorithm for finding flackes from the 1st iteraction in high resolution.
+            # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes from the 1st iteraction in high resolution.
             self.append(Flake(self, index,(x_min, x_max, y_min, y_max)))
 
         catalogue = ExcelOutput(self) # Create a catalogue from the list of flakes in an Excel table.
 
         if not self.out1 == 1:
-            self._clean() # Clean images of flackes in output folder.
+            self._clean() # Clean images of flakes in output folder.
 
         return None
 
@@ -238,6 +238,8 @@ class Flake:
         self.full_size = 0  # The area of the whole object in a conture mode
         self.size2 = 0  # The area of edges of an object in a mode of marked pixel in the original image
         self.full_size2 = 0  # The area of the whole object in a mode of marked pixel in the original image
+        self.object_filename = f'{parent.path}/output/objects/{parent.name}_object{self.id}.png'
+        self.parent = parent
 
         print(f"{self.id + 1}, ", end="")
         self.edit_orig_photo, self.output, self.output2 = self._load_image2(parent.path)
@@ -486,7 +488,7 @@ class ExcelOutput:
         """Insert general information (min_size, sensitivity, calibration)"""
 
         sheet = self.workbook.active
-        sheet["A1"] = f"The catalogue of Flackes in {image.name}"
+        sheet["A1"] = f"The catalogue of Flakes in {image.name}"
         sheet["A2"] = "calibration"
         sheet["B2"] = image.calibration
         sheet["C2"] = "um/px"

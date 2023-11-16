@@ -2,8 +2,8 @@ from openpyxl import Workbook
 import cv2
 import os
 import shutil
-from .find_objects import ImageCrawler
-from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
+from find_objects import ImageCrawler
+from functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
 import argparse
 
 def dialog() -> (str, str, bool, float, int):
@@ -100,3 +100,5 @@ def main():
     figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")
+
+main()  # For debuging in a code editor. Remove before install.
