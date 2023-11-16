@@ -1,7 +1,7 @@
 from PIL import Image, ImageDraw
 import numpy as np
 from openpyxl import Workbook
-from openpyxl.drawing.image import Image as Xl
+from openpyxl.drawing.image import Image as pyxl_Image
 import cv2
 import shutil
 import os
@@ -59,15 +59,14 @@ class ImageCrawler(list):
         print("The first iteration:")
         # Load an image
         self.orig_photo, self.output = self._load_image()
+        self.orig_photo_copy =self.orig_photo.copy()
+        self.pro = self.orig_photo_copy.load()
+        self.new = self.output.load()
         # Find objects in the photo in low resolution
         self.marked_objects = self._find_objects_low_resolution()
         # create output photo of detected object with centres and area of detected edges in low resolution
         if self.out1 == 1:
             self._output_marked_objects()
-
-        # Close images
-        self.orig_photo.close()
-        self.output.close()
 
         print("The second iteration:")
         # Now, find objects from the first iteration in the same area in high resolution
@@ -97,7 +96,7 @@ class ImageCrawler(list):
         print("changing gamma and contrast of the original photo")
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
-        orig_photo.save(f"{self.path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
+        # self.orig_photo.save(f"{self.path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
 
         # create new images for processing (object area in low resolution)
         output = Image.new('RGB', (orig_photo.size[0], orig_photo.size[1]), color='white')
@@ -112,17 +111,16 @@ class ImageCrawler(list):
         coordinates of centres of squares. Too small objects are removed from marked_objects. The list (marked_objects)
         is the output of this function.
         """
-        pro = self.orig_photo.load()
-        new = self.output.load()
+
         marked_pixel = []  # A list of (x, y) coordinates of marked squares of 7 by 7 pixels.
         marked_objects = [] # A list of detected object which is represented by a list of (x, y) coordinates
 
         print("marking non-black area")
         for i in range(self.orig_photo.size[0] - 1):
             for j in range(self.orig_photo.size[1] - 1):
-                R, G, B = pro[i, j]
+                R, G, B = self.pro[i, j]
                 if R > self.sensitivity or G > self.sensitivity or B > self.sensitivity:
-                    pro[i, j] = (255, 0, 0)
+                    self.pro[i, j] = (255, 0, 0)
 
         print("finding object area")
         for i in range(3, self.orig_photo.size[0] - 4, 6):
@@ -131,14 +129,14 @@ class ImageCrawler(list):
                 px = 0  # number of all pixels
                 for k in range(i - 3, i + 3):
                     for l in range(j - 3, j + 3):
-                        if pro[k, l] == (255, 0, 0):
+                        if self.pro[k, l] == (255, 0, 0):
                             red += 1
                         px += 1
                 if px != 0:
                     if red / float(px) > 0.6:
                         for k in range(i - 3, i + 3):
                             for l in range(j - 3, j + 3):
-                                new[k, l] = (255, 0, 0)
+                                self.new[k, l] = (255, 0, 0)
                         marked_pixel.append((i, j))
 
         print("finding whole objects")
@@ -231,7 +229,7 @@ class Flake:
         self.id = identifier  # identification number
         self.coordinates = coordinates  # maximal and minimal value of coordinates (x_min, x_max, y_min, y_max)
         self.width = 0  # width of an object in pixels
-        self.hight = 0  # hight of an object in pixels
+        self.height = 0  # height of an object in pixels
         self.bright2 = 0  # The sum of RGB values of all pixels of an object
         self.centre = (0, 0)  # (x, y) coordinates of centre of an object
         self.size = 0  # The area of edges of an object in a conture mode
@@ -242,34 +240,32 @@ class Flake:
         self.parent = parent
 
         print(f"{self.id + 1}, ", end="")
-        self.edit_orig_photo, self.output, self.output2 = self._load_image2(parent.path)
+        self.output, self.output2 = self._load_image2(parent.path)
+        self.org = parent.orig_photo.load()
+        self.new = self.output.load()
+        self.test = self.output2.load()
         self.marked_object2 = self._find_objects_high_resolution(parent.path, parent.name, parent.sensitivity, parent.min_size)
         self._measure(parent.path, parent.name, parent.out1)
 
 
     def _load_image2(self, path):
         '''Crop original image and make output images.'''
-        edit_orig_photo = Image.open(f'{path}/output/org_gc.png')  # open corrected original photo
+        #edit_orig_photo = Image.open(f'{path}/output/org_gc.png')  # open corrected original photo
         #self.org = self.edit_orig_photo.load()
 
         output = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
                                self.coordinates[3] - self.coordinates[2] + 8),
-                       color='white')  # vytvoreni noveho obrazku
+                       color='white')  # create a new image
         #self.new = self.output.load()
-        output2 = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
-                               self.coordinates[3] - self.coordinates[2] + 8),
-                       color='white')  # vytvoreni noveho obrazku
+        output2 = output.copy()
         #self.test = self.output2.load()
-        return edit_orig_photo, output, output2
+        return output, output2
 
     def _find_objects_high_resolution(self, path, name, sensitivity, min_size):
         '''Detect object in higth resolution and delete too small objects.'''
-        self.org = self.edit_orig_photo.load()
-        self.new = self.output.load()
-        self.test = self.output2.load()
-
         marked_pixel = []
 
+        # Crop original photo
         for i in range(self.coordinates[0] - 4, self.coordinates[1] + 4):
             for j in range(self.coordinates[2] - 4, self.coordinates[3] + 4):
                 R, G, B = self.org[i, j]
@@ -344,31 +340,32 @@ class Flake:
         return marked_object
 
     def _measure(self, path, name, out1):
-        '''Measure coordinates, size, hight of a object.'''
+        '''Measure coordinates, size, height of a object.'''
         self.centre = ((int(sum(x for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best])),
                    int(sum(y for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best]))))
 
         # mark shapes of image
-        shape = Image.open(f'{path}/output/objects/{name}_object{self.id}.png')
+        shape = self.output.copy()
         shape = gamma_correct(shape, 1.5)
         shape = change_contrast(shape, 100)
-        shape.save(f'{path}/output/objects/{name}_object{self.id}_proc1.png')
 
-        shape = cv2.imread(f'{path}/output/objects/{name}_object{self.id}_proc1.png')
+        shape = np.array(shape)
         shape = cv2.cvtColor(shape, cv2.COLOR_BGR2RGB)
         shape = cv2.addWeighted(shape, 4, shape, 0, 0)
         shape = cv2.cvtColor(shape, cv2.COLOR_BGR2GRAY)
         shape = cv2.Canny(shape, 300, 100)
         cv2.imwrite(f'{path}/output/objects/{name}_object{self.id}_proc2.png', shape)
+        #shape = cv2.cvtColor(shape, cv2.COLOR_GRAY2RGB) # It doesn't work.
+        #shape = Image.fromarray(shape)
 
-        prc = Image.open(f'{path}/output/objects/{name}_object{self.id}_proc2.png')  # open corrected original photo
-        pc = prc.load()
+        shape = Image.open(f'{path}/output/objects/{name}_object{self.id}_proc2.png')  # open corrected original photo
+        pc = shape.load()
 
         # calculate size of the object (new)
         x_min = x_max = 0
-        for i in range(prc.size[0]):
+        for i in range(shape.size[0]):
             white = 0
-            for j in range(prc.size[1]):
+            for j in range(shape.size[1]):
                 W = pc[i, j]
                 if W == 255 and white == 0:
                     white = 1
@@ -400,8 +397,7 @@ class Flake:
             self.output2.save(
                 f'{path}/output/objects/{name}_object{self.id}_proc0.png')  # store photo of area of detect object
 
-        self.width = self.output.width
-        self.hight = self.output.height
+        self.width, self.height = self.output.size
         return None
 
     @property
@@ -422,7 +418,7 @@ class Flake:
 
     @property
     def sizeY(self) -> float:
-        return  self.hight * self.calib
+        return  self.height * self.calib
 
     @property
     def transparency(self) -> float:
@@ -433,7 +429,7 @@ class Flake:
         return self.bright2 / (3*self.size2)
 
     @property
-    def height(self) -> float:
+    def object_height(self) -> float:
         return  20 * self.bright2 / self.size2 - 6940
 
     @property
@@ -476,6 +472,7 @@ class ExcelOutput:
     """
     def __init__(self, image: ImageCrawler):
         self.workbook = Workbook()  # Create a new table
+        self.image = image
         self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx" # Set then name of the table
         # Create a header of the table with congiguration of measuring and explanatory notes
         self._generate_metadata_header(image)
@@ -535,14 +532,14 @@ class ExcelOutput:
             sheet[f"F{index + 7}"] = flake.sizeY
             sheet[f"G{index + 7}"] = flake.transparency
             sheet[f"H{index + 7}"] = flake.bright
-            sheet[f"I{index + 7}"] = flake.height
+            sheet[f"I{index + 7}"] = flake.object_height
             sheet[f"J{index + 7}"] = flake.ratio
             # add image
-            img = Xl(f"{image.path}/output/objects/{image.name}_object{index}.png")
+            img = pyxl_Image(f"{image.path}/output/objects/{image.name}_object{index}.png")
             sheet.add_image(img, f'K{index + 7}')
-            img2 = Image.open(f"{image.path}/output/objects/{image.name}_object{index}.png")
+
             # set the height of the (index+7)-th row because of the image
-            sheet.row_dimensions[index + 7].height = img2.height * 0.8
+            sheet.row_dimensions[index + 7].height = flake.height * 0.8
 
             sheet[f"L{index + 7}"] = flake.contourI
             sheet[f"M{index + 7}"] = flake.contourII
@@ -551,8 +548,8 @@ class ExcelOutput:
             sheet[f"P{index + 7}"] = flake.filter_transparency[0]
             sheet[f"Q{index + 7}"] = flake.filter_transparency[1]
 
-            if max_width < img2.size[0]:
-                max_width = img2.size[0]
+            if max_width < flake.width:
+                max_width = flake.width
 
         # set the width of the K-th column because of the image
         sheet.column_dimensions['K'].width = max_width * 0.15
