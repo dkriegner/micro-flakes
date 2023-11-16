@@ -35,7 +35,8 @@ It is necessary to have PIP in Python installed. To install, visit this webpage:
 
 ## Usage
 To start the software, open the executable file "flakes-detector". There is the file in the same path where Python is installed. After starting the script, you will be asked a few questions to set basic filters. You will set the working directory by the first answer. The software remembers the last directory. Then you will use an input photo or you will take a new photo by a webcam. The processing time depends on the resolution of the input photo. For instance, a 5 MPx photo typically takes tens of seconds to process.
-The script supports input from the comand line, for example:
+
+The script supports input from the command  line, for example:
 ```
 pip script.py -p C:\Users\name\Documents\Test -n image1.png -o False -m 42.4 -s 40
 ```
