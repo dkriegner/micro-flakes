@@ -4,7 +4,8 @@ import shutil
 
 
 def take_webcam_image(path: str, filename: str):
-    '''This function takes a photo with a webcam. The first parameter is the path of a new photo. The second parameter is the name of a new photo.'''
+    '''This function takes a photo by a USB webcam. The first parameter is the path of a new photo.
+    The second parameter is the name of a new photo.'''
     cap = cv2.VideoCapture(0, cv2.CAP_MSMF)
     # cap.set(14, 500) # gain
     # Turn off auto exposure
@@ -32,7 +33,7 @@ def take_webcam_image(path: str, filename: str):
     return None
 
 def float_question(question: str, default: float | None = None) -> float:
-    """get float answer for a question."""
+    """Get a float answer for a question."""
     choices = f' [{default}]: ' if default else ':'
     reply = str(input(question + choices)).lower().strip() or default
     try:
@@ -42,7 +43,7 @@ def float_question(question: str, default: float | None = None) -> float:
         return float_question(question, default)
 
 def RGB_question(question: int, default: int | None = None) -> int:
-    """get integer answer between 0 and 255 for a question."""
+    """Get an integer answer between 0 and 255 for a question."""
     choices = f' [{default}]: ' if default else ':'
     reply = str(input(question + choices)).lower().strip() or default
     try:
@@ -56,8 +57,21 @@ def RGB_question(question: int, default: int | None = None) -> int:
         print("invalid input! try again")  # optional print message
         return float_question(question, default)
 
+def yes_no_question(question: str, default: bool = True) -> bool:
+    """Get boolean answer for a question."""
+    choices = ' [Y/n]: ' if default else ' [y/N]:'
+    default_answer = 'y' if default else 'n'
+    reply = str(input(question + choices)).lower().strip() or default_answer
+    if reply[0] == 'y':
+        return True
+    if reply[0] == 'n':
+        return False
+    else:
+        print("invalid input! try again")  # optional print message
+        return yes_no_question(question, default)
+
 def manage_subfolders(path: str):
-    '''create the output and input subfolder or clean the output subfolder'''
+    '''Create the output and input subfolder or clean the output subfolder'''
     path1 = path
     path2 = "output\\objects"
     if not os.path.exists(os.path.join(path1, "input")):
@@ -78,15 +92,3 @@ def read_cache() -> str:
     cache.close()
     return path
 
-def yes_no_question(question: str, default: bool = True) -> bool:
-    """get boolean answer for a question."""
-    choices = ' [Y/n]: ' if default else ' [y/N]:'
-    default_answer = 'y' if default else 'n'
-    reply = str(input(question + choices)).lower().strip() or default_answer
-    if reply[0] == 'y':
-        return True
-    if reply[0] == 'n':
-        return False
-    else:
-        print("invalid input! try again")  # optional print message
-        return yes_no_question(question, default)

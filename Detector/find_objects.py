@@ -62,7 +62,7 @@ class ImageCrawler(list):
         # Find objects in the photo in low resolution
         self.marked_objects = self._find_objects_low_resolution()
         # create output photo of detected object with centres and area of detected edges in low resolution
-        if out1 == 1:
+        if self.out1 == 1:
             self._output_marked_objects()
 
         # Close images
@@ -199,34 +199,45 @@ class ImageCrawler(list):
                     test[k, l] = (0, 0, 0)
             p += 1
 
-        ts.save(f'{self.path}/output/{self.name}_first_step1.png')  # store detected objects with centre and size of edge
-        self.orig_photo.save(f'{self.path}/output/{self.name}_first_step2.png')  # store marked object area
-        self.output.save(f'{self.path}/output/{self.name}_first_step3.png')  # store object area in low resolution
-        ts.close()
+        # Marked light pixel in original picture
+        self.orig_photo.save(f'{self.path}/output/{self.name}_first_step2.png')
+        # Marked squares with 7 by 7 (potentional object area in low resolution)
+        self.output.save(f'{self.path}/output/{self.name}_first_step1.png')
+        # stored objects with a centre and an area of edge
+        ts.save(f'{self.path}/output/{self.name}_first_step3.png')
+        ts.close()  # close the 3rd image
 
         return None
 
     def _clean(self):
+        '''Clean output images from the 2nd interaction in ../output/objects.'''
         shutil.rmtree(os.path.join(self.path, "output\\objects"))
-
         return None
 
 class Flake:
-    """Represents and processes an identified object on an image."""
+    """
+    Represents and processes an identified object on an image. At first, self._load_image2 load the original image
+    to self.edit_orig_photo and crops to self.output and self.output2. The 2nd and 3rd image conteins only one object.
+    Next function (self._find_objects_high_resolution) makes the same procedure as self._find_objects_low_resolution
+    in ImageCrawler in high resolution. Now the function operate with squares 3 by 3 pixels. The output of this function
+    is self.marked_object2. It has the same structure as self.marked_object in ImageCrawler. The 3rd function
+    (self._measure) measures many parameters of objects which is stored in self.marked_object2.
+    """
     def __init__(self, parent: ImageCrawler, identifier: int, coordinates: (int, int, int, int)):
         """Process flake in high resolution."""
-        # define all needed properties
-        self.id = identifier
-        self.coordinates = coordinates
-        self.bright2 = 0
-        self.centre = (0, 0)
-        self.size = 0
-        self.full_size = 0
-        self.size2 = 0
-        self.full_size2 = 0
-        self.width = 0
-        self.hight = 0
+        #claibration for convertin to the real size
         self.calib = parent.calibration
+        # define all needed properties of a flake
+        self.id = identifier  # identification number
+        self.coordinates = coordinates  # maximal and minimal value of coordinates (x_min, x_max, y_min, y_max)
+        self.width = 0  # width of an object in pixels
+        self.hight = 0  # hight of an object in pixels
+        self.bright2 = 0  # The sum of RGB values of all pixels of an object
+        self.centre = (0, 0)  # (x, y) coordinates of centre of an object
+        self.size = 0  # The area of edges of an object in a conture mode
+        self.full_size = 0  # The area of the whole object in a conture mode
+        self.size2 = 0  # The area of edges of an object in a mode of marked pixel in the original image
+        self.full_size2 = 0  # The area of the whole object in a mode of marked pixel in the original image
 
         print(f"{self.id + 1}, ", end="")
         self.edit_orig_photo, self.output, self.output2 = self._load_image2(parent.path)
@@ -458,36 +469,51 @@ class Flake:
 
 
 class ExcelOutput:
-    """Generate Excel sheet with identified flakes and image information"""
+    """
+    Generate Excel sheet with identified flakes. The table contains a ID, images of objects and their all measures parameters.
+    """
     def __init__(self, image: ImageCrawler):
-        self.workbook = Workbook()
-        self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx"
-        self._generate_metadata_header()
-
+        self.workbook = Workbook()  # Create a new table
+        self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx" # Set then name of the table
+        # Create a header of the table with congiguration of measuring and explanatory notes
+        self._generate_metadata_header(image)
+        # Add all stored flakes in self.detected_object in ImageCrawler
         self._generate_object_table(image)
+        # Save the table
         self._save_to_disk(self.filename)
 
-    def _generate_metadata_header(self):
+    def _generate_metadata_header(self, image):
         """Insert general information (min_size, sensitivity, calibration)"""
 
         sheet = self.workbook.active
-        sheet["A1"] = "id"
-        sheet["B1"] = "x (um)"
-        sheet["C1"] = "y (um)"
-        sheet["D1"] = "size (um^2)"
-        sheet["E1"] = "Size X (um)"
-        sheet["F1"] = "Size Y (um)"
-        sheet["G1"] = "transparency (%)"
-        sheet["H1"] = "Bright (RGB)"
-        sheet["I1"] = "Height (Å)"
-        sheet["J1"] = "size ratio"
-        sheet["K1"] = "photo"
-        sheet["L1"] = "contourI"
-        sheet["M1"] = "contourII"
-        sheet["N1"] = "filter - contour"  # Does the object have a constant contour?  3,5 (3,7) - 5
-        sheet["O1"] = "Value - bigger is better"
-        sheet["P1"] = "filter - transparency"  # Is the object transparent?  >0,1 (0,08)
-        sheet["Q1"] = "Value - bigger is better"
+        sheet["A1"] = f"The catalogue of Flackes in {image.name}"
+        sheet["A2"] = "calibration"
+        sheet["B2"] = image.calibration
+        sheet["C2"] = "um/px"
+        sheet["A3"] = "min_size"
+        sheet["B3"] = image.min_size*1.6952
+        sheet["C3"] = "um^3"
+        sheet["A4"] = "sensitivity"
+        sheet["B4"] = image.sensitivity
+        sheet["C4"] = "RGB value"
+
+        sheet["A6"] = "id"
+        sheet["B6"] = "x (um)"
+        sheet["C6"] = "y (um)"
+        sheet["D6"] = "size (um^2)"
+        sheet["E6"] = "Size X (um)"
+        sheet["F6"] = "Size Y (um)"
+        sheet["G6"] = "transparency (%)"
+        sheet["H6"] = "Bright (RGB)"
+        sheet["I6"] = "Height (Å)"
+        sheet["J6"] = "size ratio"
+        sheet["K6"] = "photo"
+        sheet["L6"] = "contourI"
+        sheet["M6"] = "contourII"
+        sheet["N6"] = "filter - contour"  # Does the object have a constant contour?  3,5 (3,7) - 5
+        sheet["O6"] = "Value - bigger is better"
+        sheet["P6"] = "filter - transparency"  # Is the object transparent?  >0,1 (0,08)
+        sheet["Q6"] = "Value - bigger is better"
 
         return None
 
@@ -499,42 +525,35 @@ class ExcelOutput:
         max_width = 0
         for index, flake in enumerate(image):
             # fill Excel table
-            sheet[f"A{index + 2}"] = index
-            sheet[f"B{index + 2}"] = flake.pos_x
-            sheet[f"C{index + 2}"] = flake.pos_y
-            sheet[f"D{index + 2}"] = flake.area
-            sheet[f"E{index + 2}"] = flake.sizeX
-            sheet[f"F{index + 2}"] = flake.sizeY
-            sheet[f"G{index + 2}"] = flake.transparency
-            sheet[f"H{index + 2}"] = flake.bright
-            sheet[f"I{index + 2}"] = flake.height
-            sheet[f"J{index + 2}"] = flake.ratio
+            sheet[f"A{index + 7}"] = index
+            sheet[f"B{index + 7}"] = flake.pos_x
+            sheet[f"C{index + 7}"] = flake.pos_y
+            sheet[f"D{index + 7}"] = flake.area
+            sheet[f"E{index + 7}"] = flake.sizeX
+            sheet[f"F{index + 7}"] = flake.sizeY
+            sheet[f"G{index + 7}"] = flake.transparency
+            sheet[f"H{index + 7}"] = flake.bright
+            sheet[f"I{index + 7}"] = flake.height
+            sheet[f"J{index + 7}"] = flake.ratio
             # add image
             img = Xl(f"{image.path}/output/objects/{image.name}_object{index}.png")
-            sheet.add_image(img, f'K{index + 1}')
+            sheet.add_image(img, f'K{index + 7}')
             img2 = Image.open(f"{image.path}/output/objects/{image.name}_object{index}.png")
-            sheet.row_dimensions[index + 1].height = img2.height * 0.8
+            # set the height of the (index+7)-th row because of the image
+            sheet.row_dimensions[index + 7].height = img2.height * 0.8
 
-            '''
-            sheet[f"H{index + 1}"] = size[index]
-            sheet[f"I{index + 1}"] = full_size[index]
-            if 3.5 < full_size[index] / size[index] < 5:
-                sheet[f"J{index + 1}"] = "OK"
-                sheet[f"K{index + 1}"] = abs(full_size[index] / size[index] - (3.5 + 5) / 2)
-            else:
-                sheet[f"J{index + 1}"] = "NO"
-            if 0.08 < 1 - size2[index] / full_size2[index]:
-                sheet[f"L{index + 1}"] = "OK"
-                sheet[f"M{index + 1}"] = abs(1 - size2[index] / full_size2[index]) - 0.08
-            else:
-                sheet[f"L{index + 1}"] = "NO"
-            '''
+            sheet[f"L{index + 7}"] = flake.contourI
+            sheet[f"M{index + 7}"] = flake.contourII
+            sheet[f"N{index + 7}"] = flake.filter_contour[0]
+            sheet[f"O{index + 7}"] = flake.filter_contour[1]
+            sheet[f"P{index + 7}"] = flake.filter_transparency[0]
+            sheet[f"Q{index + 7}"] = flake.filter_transparency[1]
+
             if max_width < img2.size[0]:
                 max_width = img2.size[0]
 
+        # set the width of the K-th column because of the image
         sheet.column_dimensions['K'].width = max_width * 0.15
-
-        # and much more...
 
     def _save_to_disk(self, filename):
         """Store the excel sheet on the filesystem"""

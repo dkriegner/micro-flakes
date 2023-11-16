@@ -100,4 +100,3 @@ def main():
     figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")
-
