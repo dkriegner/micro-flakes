@@ -37,13 +37,13 @@ def change_contrast(img, level: float):
 
 class ImageCrawler(list):
     """
-    It loads by the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of detected object
-    with centres and area of detected edges in low resolution (self.output). It identifs objects on a artificially
-    lower resolution image and store as a list of detected flackes (self.marked_objects). Every flacke is a list of coordinates [x, y] of
-    squares 7 by 7 pixel. Every square conteins the same pixel. It is a methode how to decrease resolution. Too small
-    object is removed (objects which are contain less squares than self.min_size).
-    Than it creates a new object for each flake (Flake object). It repeats the same algorithm for finding flackes
-    from the 1st iteraction in high resolution.
+    It loads the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of the detected object
+    with centres and area of detected edges in low resolution (self.output). It identifies objects on an artificially
+    lower-resolution image and stores them as a list of detected flakes (self.marked_objects). Every flake is a list of coordinates [x, y] of
+    squares 7×7 pixels. Every square contains the same pixel. It is a method how to decrease resolution. Too small
+    objects are removed (objects which contain less squares than self.min_size).
+    Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding flakes
+    from the 1st iteration in high resolution.
     """
     def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
         self.name = name  # The name of an image to load
@@ -105,10 +105,10 @@ class ImageCrawler(list):
 
     def _find_objects_low_resolution(self):
         """
-        It marks pixel having R, G, B biger than sensitivity value. It splits the image to a matrix which is contained
-        grups 7 by 7 pixel (squares). If a square contains more than 60 % marked pixel, it is marked as marked_pixel.
-        It is a list of (x, y) coordinates of centres of squares. Than neighbour squares are connected to objects.
-        Objects is stores in marked_objects. It is a list of detected object which is represented by a list of (x, y)
+        It marks pixels having R, G, B bigger than the sensitivity value. It splits the image into a matrix which contains
+        groups of 7×7 pixels (squares). If a square contains more than 60 % marked pixels, it is marked as marked_pixel.
+        It is a list of (x, y) coordinates of centres of squares. Then, neighbour squares are connected to objects.
+        Objects are stored in marked_objects. It is a list of detected objects which are represented by a list of (x, y)
         coordinates of centres of squares. Too small objects are removed from marked_objects. The list (marked_objects)
         is the output of this function.
         """
@@ -218,8 +218,8 @@ class Flake:
     """
     Represents and processes an identified object on an image. At first, self._load_image2 load the original image
     to self.edit_orig_photo and crops to self.output and self.output2. The 2nd and 3rd image conteins only one object.
-    Next function (self._find_objects_high_resolution) makes the same procedure as self._find_objects_low_resolution
-    in ImageCrawler in high resolution. Now the function operate with squares 3 by 3 pixels. The output of this function
+    The next function (self._find_objects_high_resolution) makes the same procedure as self._find_objects_low_resolution
+    in ImageCrawler in high resolution. Now the function operates with squares 3×3 pixels. The output of this function
     is self.marked_object2. It has the same structure as self.marked_object in ImageCrawler. The 3rd function
     (self._measure) measures many parameters of objects which is stored in self.marked_object2.
     """

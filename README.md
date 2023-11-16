@@ -38,7 +38,7 @@ To start the software, open the executable file "flakes-detector". There is the 
 
 The script supports input from the command  line, for example:
 ```
-pip script.py -p C:\Users\name\Documents\Test -n image1.png -o False -m 42.4 -s 40
+Python3 script.py -p C:\Users\name\Documents\Test -n image1.png -o False -m 42.4 -s 40
 ```
 `-p` is the path of the input image, `-n` is the name of the input image, `-o` is if you want output images (True or False), `-m` is the minimal area of edges of the object in um^2 and `-s` is the sensitivity of script on objects in dark field. For more information use `--help`.
 ## How to works
