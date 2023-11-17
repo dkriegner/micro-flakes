@@ -87,7 +87,7 @@ class ImageCrawler(list):
 
         return None
 
-    def _load_image(self):
+    def _load_image(self) -> (Image.Image, Image.Image):
         """Loads the image from the disk into a PIL Image object. """
         '''It finds and marks all object in the photo.'''
         orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
@@ -240,28 +240,24 @@ class Flake:
         self.parent = parent
 
         print(f"{self.id + 1}, ", end="")
-        self.output, self.output2 = self._load_image2(parent.path)
+        self.output, self.output2 = self._load_image2()
         self.org = parent.orig_photo.load()
         self.new = self.output.load()
         self.test = self.output2.load()
-        self.marked_object2 = self._find_objects_high_resolution(parent.path, parent.name, parent.sensitivity, parent.min_size)
-        self._measure(parent.path, parent.name, parent.out1)
+        self.marked_object2 = self._find_objects_high_resolution()
+        self._measure()
 
 
-    def _load_image2(self, path):
+    def _load_image2(self):
         '''Crop original image and make output images.'''
-        #edit_orig_photo = Image.open(f'{path}/output/org_gc.png')  # open corrected original photo
-        #self.org = self.edit_orig_photo.load()
 
         output = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
                                self.coordinates[3] - self.coordinates[2] + 8),
                        color='white')  # create a new image
-        #self.new = self.output.load()
         output2 = output.copy()
-        #self.test = self.output2.load()
         return output, output2
 
-    def _find_objects_high_resolution(self, path, name, sensitivity, min_size):
+    def _find_objects_high_resolution(self):
         '''Detect object in higth resolution and delete too small objects.'''
         marked_pixel = []
 
@@ -271,9 +267,9 @@ class Flake:
                 R, G, B = self.org[i, j]
                 self.new[i - self.coordinates[0] - 1 + 5, j - self.coordinates[2] - 1 + 5] = self.org[i, j]
                 self.bright2 += R + G + B
-                if R > sensitivity or G > sensitivity or B > sensitivity:
+                if R > self.parent.sensitivity or G > self.parent.sensitivity or B > self.parent.sensitivity:
                     self.org[i, j] = (256, 0, 0)
-        self.output.save(f'{path}/output/objects/{name}_object{self.id}.png')  # storage image n-th objects
+        self.output.save(self.object_filename)  # storage image n-th objects
 
         for i in range(self.coordinates[0] - 4, self.coordinates[1] - 1 + 4, 2):
             for j in range(self.coordinates[2] - 4, self.coordinates[3] - 1 + 4, 2):
@@ -317,7 +313,7 @@ class Flake:
             i += 1
 
         for obj in marked_object.copy():
-            if len(obj) <= min_size:
+            if len(obj) <= self.parent.min_size:
                 marked_object.remove(obj)
 
         self.best = 0
@@ -339,7 +335,7 @@ class Flake:
                                 256, 0, 0)
         return marked_object
 
-    def _measure(self, path, name, out1):
+    def _measure(self):
         '''Measure coordinates, size, height of a object.'''
         self.centre = ((int(sum(x for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best])),
                    int(sum(y for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best]))))
@@ -354,11 +350,11 @@ class Flake:
         shape = cv2.addWeighted(shape, 4, shape, 0, 0)
         shape = cv2.cvtColor(shape, cv2.COLOR_BGR2GRAY)
         shape = cv2.Canny(shape, 300, 100)
-        cv2.imwrite(f'{path}/output/objects/{name}_object{self.id}_proc2.png', shape)
+        cv2.imwrite(self.object_filename[:-4] + "_contures.png", shape)
         #shape = cv2.cvtColor(shape, cv2.COLOR_GRAY2RGB) # It doesn't work.
         #shape = Image.fromarray(shape)
 
-        shape = Image.open(f'{path}/output/objects/{name}_object{self.id}_proc2.png')  # open corrected original photo
+        shape = Image.open(self.object_filename[:-4] + "_contures.png")  # open photo in defferent library
         pc = shape.load()
 
         # calculate size of the object (new)
@@ -393,9 +389,8 @@ class Flake:
             self.full_size2 += (x_max - x_min)
             x_min = x_max = 0
 
-        if out1 == 1:
-            self.output2.save(
-                f'{path}/output/objects/{name}_object{self.id}_proc0.png')  # store photo of area of detect object
+        if self.parent.out1 == 1:
+            self.output2.save(self.object_filename[:-4] + "_marked.png")  # store photo of area of detect object
 
         self.width, self.height = self.output.size
         return None
@@ -473,27 +468,28 @@ class ExcelOutput:
     def __init__(self, image: ImageCrawler):
         self.workbook = Workbook()  # Create a new table
         self.image = image
-        self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx" # Set then name of the table
+        self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx" # Set the name of the table
+        self.image_name = f"{image.path}/output/objects/{image.name}_object" # The beginnig of names of images adding to the table
         # Create a header of the table with congiguration of measuring and explanatory notes
-        self._generate_metadata_header(image)
+        self._generate_metadata_header()
         # Add all stored flakes in self.detected_object in ImageCrawler
-        self._generate_object_table(image)
+        self._generate_object_table()
         # Save the table
-        self._save_to_disk(self.filename)
+        self._save_to_disk()
 
-    def _generate_metadata_header(self, image):
+    def _generate_metadata_header(self):
         """Insert general information (min_size, sensitivity, calibration)"""
 
         sheet = self.workbook.active
-        sheet["A1"] = f"The catalogue of Flakes in {image.name}"
+        sheet["A1"] = f"The catalogue of Flakes in {self.image.name}"
         sheet["A2"] = "calibration"
-        sheet["B2"] = image.calibration
+        sheet["B2"] = self.image.calibration
         sheet["C2"] = "um/px"
         sheet["A3"] = "min_size"
-        sheet["B3"] = image.min_size*1.6952
+        sheet["B3"] = self.image.min_size*1.6952
         sheet["C3"] = "um^3"
         sheet["A4"] = "sensitivity"
-        sheet["B4"] = image.sensitivity
+        sheet["B4"] = self.image.sensitivity
         sheet["C4"] = "RGB value"
 
         sheet["A6"] = "id"
@@ -516,13 +512,13 @@ class ExcelOutput:
 
         return None
 
-    def _generate_object_table(self, image):
+    def _generate_object_table(self):
         """Insert object table header and contenct"""
         # generate header ...
         # iterate over all flakes
         sheet = self.workbook.active
         max_width = 0
-        for index, flake in enumerate(image):
+        for index, flake in enumerate(self.image):
             # fill Excel table
             sheet[f"A{index + 7}"] = index
             sheet[f"B{index + 7}"] = flake.pos_x
@@ -535,7 +531,7 @@ class ExcelOutput:
             sheet[f"I{index + 7}"] = flake.object_height
             sheet[f"J{index + 7}"] = flake.ratio
             # add image
-            img = pyxl_Image(f"{image.path}/output/objects/{image.name}_object{index}.png")
+            img = pyxl_Image(self.image_name + f"{index}.png")
             sheet.add_image(img, f'K{index + 7}')
 
             # set the height of the (index+7)-th row because of the image
@@ -554,6 +550,6 @@ class ExcelOutput:
         # set the width of the K-th column because of the image
         sheet.column_dimensions['K'].width = max_width * 0.15
 
-    def _save_to_disk(self, filename):
+    def _save_to_disk(self):
         """Store the excel sheet on the filesystem"""
         self.workbook.save(self.filename)  # save Excel table
