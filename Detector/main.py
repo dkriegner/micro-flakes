@@ -2,9 +2,10 @@ from openpyxl import Workbook
 import cv2
 import os
 import shutil
-from find_objects import ImageCrawler
-from functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
+from .find_objects import ImageCrawler
+from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
 import argparse
+import logging as log
 
 def dialog() -> (str, str, bool, float, int):
     '''Ask the user to input parameters'''
@@ -41,7 +42,7 @@ def dialog() -> (str, str, bool, float, int):
         print("Write name of photo from microscope.")
         name = input("input/")
         while not os.path.exists(f"{path}/input/{name}") or name == "":  # check if the file exists
-            print("Error! The file doesn't exist.")
+            log.warning("Error! The file doesn't exist.")
             name = input("input/")  # ask for a new input
 
     # Make ouput file after 1st iteration: marked pixel, found flakes and selected flakes with the centre of gravity.
@@ -87,6 +88,9 @@ def line_command() -> (str, str, bool, float, int):
     return args.path, args.name, args.out1, args.min_size, args.sensitivity
 
 def main():
+    # Show info messages
+    log.getLogger().setLevel(log.INFO)
+
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
 
@@ -100,5 +104,4 @@ def main():
     figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")
-
-main()  # For debuging in a code editor. Remove before install.
+    

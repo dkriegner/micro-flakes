@@ -5,6 +5,7 @@ from openpyxl.drawing.image import Image as pyxl_Image
 import cv2
 import shutil
 import os
+import logging as log
 
 def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
     '''
@@ -56,7 +57,7 @@ class ImageCrawler(list):
         self.workbook = 0  # Excel table for a new catalogue
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
 
-        print("The first iteration:")
+        log.info("The first iteration:")
         # Load an image
         self.orig_photo, self.output = self._load_image()
         self.orig_photo_copy =self.orig_photo.copy()
@@ -68,10 +69,10 @@ class ImageCrawler(list):
         if self.out1 == 1:
             self._output_marked_objects()
 
-        print("The second iteration:")
+        log.info("The second iteration:")
         # Now, find objects from the first iteration in the same area in high resolution
         # Set area for finding object in high resolution
-        print(f"processing of {len(self.marked_objects)}")
+        log.info(f"processing of {len(self.marked_objects)}")
         for index, q in enumerate(self.marked_objects):
             # identify corners of objects
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
@@ -91,9 +92,9 @@ class ImageCrawler(list):
         """Loads the image from the disk into a PIL Image object. """
         '''It finds and marks all object in the photo.'''
         orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
-        print("The photo has been opened.")
+        log.info("The photo has been opened.")
 
-        print("changing gamma and contrast of the original photo")
+        log.info("changing gamma and contrast of the original photo")
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
         # self.orig_photo.save(f"{self.path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
@@ -115,14 +116,14 @@ class ImageCrawler(list):
         marked_pixel = []  # A list of (x, y) coordinates of marked squares of 7 by 7 pixels.
         marked_objects = [] # A list of detected object which is represented by a list of (x, y) coordinates
 
-        print("marking non-black area")
+        log.info("marking non-black area")
         for i in range(self.orig_photo.size[0] - 1):
             for j in range(self.orig_photo.size[1] - 1):
                 R, G, B = self.pro[i, j]
                 if R > self.sensitivity or G > self.sensitivity or B > self.sensitivity:
                     self.pro[i, j] = (255, 0, 0)
 
-        print("finding object area")
+        log.info("finding object area")
         for i in range(3, self.orig_photo.size[0] - 4, 6):
             for j in range(3, self.orig_photo.size[1] - 4, 6):
                 red = 0  # number of red pixels
@@ -139,7 +140,7 @@ class ImageCrawler(list):
                                 self.new[k, l] = (255, 0, 0)
                         marked_pixel.append((i, j))
 
-        print("finding whole objects")
+        log.info("finding whole objects")
 
         marked_pixel = np.array(marked_pixel)
 
@@ -165,7 +166,7 @@ class ImageCrawler(list):
 
             marked_objects.append(queue)
 
-        print("deleting too small object")
+        log.info("deleting too small object")
         for obj in marked_objects.copy():
             if len(obj) <= self.min_size:
                 marked_objects.remove(obj)

@@ -1,3 +1,4 @@
+import logging as log
 import cv2
 import os
 import shutil
@@ -17,14 +18,13 @@ def take_webcam_image(path: str, filename: str):
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 3648)
     # Check if the webcam is opened correctly
     if not cap.isOpened():
-        raise IOError("Cannot open webcam")
+        raise log.error("Cannot open webcam")
     while True:
         ret, frame = cap.read()
         # cv2.normalize(frame, frame, 100, 255, cv2.NORM_MINMAX)
         # frame = cv2.resize(frame, None, fx=1, fy=1, interpolation=cv2.INTER_AREA)
         cv2.imshow('Input', frame)
         cv2.imwrite(filename=f'{path}/{filename}.jpg', img=frame)
-        # print(frame)
         c = cv2.waitKey(1)
         if c == 27:
             break
@@ -39,7 +39,7 @@ def float_question(question: str, default: float | None = None) -> float:
     try:
         return float(reply)
     except (ValueError, TypeError):
-        print("invalid input! try again")  # optional print message
+        log.warning("invalid input! try again")  # optional print message
         return float_question(question, default)
 
 def RGB_question(question: int, default: int | None = None) -> int:
@@ -51,10 +51,10 @@ def RGB_question(question: int, default: int | None = None) -> int:
         if 0 <= test <= 255:
             return int(reply)
         else:
-            print("invalid input! write integer between 0 and 255")  # optional print message
+            log.warning("invalid input! write integer between 0 and 255")  # optional print message
             return float_question(question, default)
     except (ValueError, TypeError):
-        print("invalid input! try again")  # optional print message
+        log.warning("invalid input! try again")  # optional print message
         return float_question(question, default)
 
 def yes_no_question(question: str, default: bool = True) -> bool:
@@ -67,7 +67,7 @@ def yes_no_question(question: str, default: bool = True) -> bool:
     if reply[0] == 'n':
         return False
     else:
-        print("invalid input! try again")  # optional print message
+        log.warning("invalid input! try again")  # optional print message
         return yes_no_question(question, default)
 
 def manage_subfolders(path: str):
