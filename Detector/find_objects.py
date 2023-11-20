@@ -72,7 +72,7 @@ class ImageCrawler(list):
         log.info("The second iteration:")
         # Now, find objects from the first iteration in the same area in high resolution
         # Set area for finding object in high resolution
-        log.info(f"processing of {len(self.marked_objects)}")
+        log.info(f"processing of {len(self.marked_objects)} objects:")
         for index, q in enumerate(self.marked_objects):
             # identify corners of objects
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
@@ -103,7 +103,7 @@ class ImageCrawler(list):
         output = Image.new('RGB', (orig_photo.size[0], orig_photo.size[1]), color='white')
         return orig_photo, output
 
-    def _find_objects_low_resolution(self):
+    def _find_objects_low_resolution(self) -> list:
         """
         It marks pixels having R, G, B bigger than the sensitivity value. It splits the image into a matrix which contains
         groups of 7×7 pixels (squares). If a square contains more than 60 % marked pixels, it is marked as marked_pixel.
@@ -240,7 +240,7 @@ class Flake:
         self.object_filename = f'{parent.path}/output/objects/{parent.name}_object{self.id}.png'
         self.parent = parent
 
-        print(f"{self.id + 1}, ", end="")
+        log.info(f"{round(100*(self.id + 1)/len(parent.marked_objects), 0)} %")
         self.output, self.output2 = self._load_image2()
         self.org = parent.orig_photo.load()
         self.new = self.output.load()
@@ -249,7 +249,7 @@ class Flake:
         self._measure()
 
 
-    def _load_image2(self):
+    def _load_image2(self) -> (Image.Image, Image.Image):
         '''Crop original image and make output images.'''
 
         output = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
@@ -258,7 +258,7 @@ class Flake:
         output2 = output.copy()
         return output, output2
 
-    def _find_objects_high_resolution(self):
+    def _find_objects_high_resolution(self) -> list:
         '''Detect object in higth resolution and delete too small objects.'''
         marked_pixel = []
 
@@ -551,6 +551,10 @@ class ExcelOutput:
         # set the width of the K-th column because of the image
         sheet.column_dimensions['K'].width = max_width * 0.15
 
+        return None
+
     def _save_to_disk(self):
         """Store the excel sheet on the filesystem"""
         self.workbook.save(self.filename)  # save Excel table
+
+        return None
