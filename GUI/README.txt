@@ -1,0 +1,1 @@
+This is a GUI version of the detector of flakes. It does not work. It is a prototype of the code. It will be implemented in the final step of developing the code.
