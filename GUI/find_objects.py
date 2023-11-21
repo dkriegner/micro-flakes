@@ -6,9 +6,8 @@ import cv2
 import shutil
 import os
 import logging as log
-
+from functions import manage_subfolders
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QLabel, QPlainTextEdit, QFileDialog
-
 
 
 def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
@@ -40,192 +39,6 @@ def change_contrast(img: Image.Image, level: float) -> Image.Image:
     return img.point(contrast)
 
 
-class MyApp(QWidget):
-    def __init__(self):
-        super().__init__()
-
-        self.initUI()
-
-    def initUI(self):
-        vbox = QVBoxLayout()
-        self.setLayout(vbox)
-
-        self.label1 = QLabel('Welcome in software to automatic detect flakes in a microscope.')
-        vbox.addWidget(self.label1)
-
-        self.label2 = QLabel('Please select a source of input data:')
-        vbox.addWidget(self.label2)
-
-        self.button1 = QPushButton('Take a new photo of samples')
-        self.button1.clicked.connect(self.open_option1)
-        vbox.addWidget(self.button1)
-
-        self.button2 = QPushButton('Load a photo of samples')
-        self.button2.clicked.connect(self.open_option2)
-        vbox.addWidget(self.button2)
-
-        self.setWindowTitle('Flakes detector')
-        self.setGeometry(300, 300, 300, 200)
-        self.show()
-
-    def open_option1(self):
-        self.option1 = Option1()
-
-    def open_option2(self):
-        self.option2 = Option2()
-
-
-class Option1(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.directory = ""
-        self.initUI()
-
-    def initUI(self):
-        vbox = QVBoxLayout()
-        self.setLayout(vbox)
-
-        self.label = QLabel('Name of a new image:')
-        vbox.addWidget(self.label)
-
-        self.textbox = QTextEdit()
-        vbox.addWidget(self.textbox)
-
-        self.dirButton = QPushButton('Choose Directory')
-        self.dirButton.clicked.connect(self.open_directory_dialog)
-        vbox.addWidget(self.dirButton)
-
-        self.label2 = QLabel('Do you want output images?')
-        vbox.addWidget(self.label2)
-
-        self.combobox = QComboBox()
-        self.combobox.addItems(["Yes", "No"])
-        vbox.addWidget(self.combobox)
-
-        self.label3 = QLabel('Minimal area of edge of object in um^2:')
-        vbox.addWidget(self.label3)
-
-        self.textbox2 = QTextEdit()
-        vbox.addWidget(self.textbox2)
-
-        self.label4 = QLabel('Sensitivity of script on objects in dark field:')
-        vbox.addWidget(self.label4)
-
-        self.textbox3 = QTextEdit()
-        vbox.addWidget(self.textbox3)
-
-        self.button = QPushButton('Start')
-        self.button.clicked.connect(self.on_click)
-        vbox.addWidget(self.button)
-
-        self.logbox = QPlainTextEdit()
-        self.logbox.setReadOnly(True)
-        vbox.addWidget(self.logbox)
-
-        self.setWindowTitle('Option 1')
-        self.setGeometry(300, 300, 300, 200)
-        self.show()
-
-    def open_directory_dialog(self):
-        self.directory = QFileDialog.getExistingDirectory(self, "QFileDialog.getExistingDirectory()", "")
-        if not self.directory == "":
-            self.logbox.appendPlainText(f'User selected directory: {self.directory}')
-        else:
-            self.logbox.appendPlainText('No directory selected.')
-
-    def on_click(self):
-        # Fixed setting parameters
-        calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
-
-        # User input
-        path = str(self.directory)
-        name = self.textbox.toPlainText()
-        more_output = True if self.combobox.currentText() == "Yes" else False
-        min_size = float(self.textbox2.toPlainText())
-        sensitivity = int(self.textbox3.toPlainText())
-        self.logbox.appendPlainText(f'User entered: {name}, {self.directory}, {more_output}, {min_size}, {sensitivity}')
-        #print(f'User entered: {type(name)}, {self.directory}, {type(more_output)}, {type(min_size)}, {sensitivity}')
-
-        # Load an image, find all flakes and make a catalogue them.
-        figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
-
-
-class Option2(QWidget):
-    # Load an existed image
-    def __init__(self):
-        super().__init__()
-
-        self.initUI()
-
-    def initUI(self):
-        vbox = QVBoxLayout()
-        self.setLayout(vbox)
-
-        self.label = QLabel('Choose a File:')
-        vbox.addWidget(self.label)
-
-        self.button = QPushButton('Choose File')
-        self.button.clicked.connect(self.open_file_dialog)
-        vbox.addWidget(self.button)
-
-        self.label2 = QLabel('Do you want output images?')
-        vbox.addWidget(self.label2)
-
-        self.combobox = QComboBox()
-        self.combobox.addItems(["Yes", "No"])
-        vbox.addWidget(self.combobox)
-
-        self.label3 = QLabel('Minimal area of edge of object in um^2:')
-        vbox.addWidget(self.label3)
-
-        self.textbox2 = QTextEdit()
-        vbox.addWidget(self.textbox2)
-
-        self.label4 = QLabel('Sensitivity of script on objects in dark field:')
-        vbox.addWidget(self.label4)
-
-        self.textbox3 = QTextEdit()
-        vbox.addWidget(self.textbox3)
-
-        self.button2 = QPushButton('Start')
-        self.button2.clicked.connect(self.on_click)
-        vbox.addWidget(self.button2)
-
-        self.logbox = QPlainTextEdit()
-        self.logbox.setReadOnly(True)
-        vbox.addWidget(self.logbox)
-
-        self.setWindowTitle('Option 2')
-        self.setGeometry(300, 300, 300, 200)
-        self.show()
-
-    def open_file_dialog(self):
-        self.fileName, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
-                                                  "All Files (*);;Python Files (*.py)")
-        if self.fileName:
-            self.logbox.appendPlainText(f'User selected file: {self.fileName}')
-        else:
-            self.logbox.appendPlainText('No file selected.')
-
-    def on_click(self):
-        # Fixed setting parameters
-        calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
-
-        # User input
-        path_name = str(self.fileName)
-        index = path_name.rfind("/")
-        name = path_name[index+1:]
-        path = path_name[:index-6]
-        more_output = True if self.combobox.currentText() == "Yes" else False
-        min_size = float(self.textbox2.toPlainText())
-        sensitivity = int(self.textbox3.toPlainText())
-        self.logbox.appendPlainText(f'User entered: {path}, {name}, {more_output}, {min_size}, {sensitivity}')
-        print(f'User entered: {name}, {path}, {more_output}, {min_size}, {sensitivity}')
-
-        # Load an image, find all flakes and make a catalogue them.
-        figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
-
-
 class ImageCrawler(list):
     """
     It loads the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of the detected object
@@ -236,21 +49,21 @@ class ImageCrawler(list):
     Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding flakes
     from the 1st iteration in high resolution.
     """
-    def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
+    def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float,
+                 input_app=0):
         self.name = name  # The name of an image to load
         self.path = path  # The path of an image to load
         self.out1 = more_output  # Look at main.py (more_output)
         self.min_size = min_size  # Look at main.py
         self.sensitivity = sensitivity  # Look at main.py
         self.calibration = calibration  # Look at main.py
-        self.detected_object = []  # List of detected flakes. Every flake is a list of coordinates [x, y]
+        self.detected_object = [] # List of detected flakes. Every flake is a list of coordinates [x, y]
         self.workbook = 0  # Excel table for a new catalogue
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
-        #self.widget = widget
+        self.input_app = input_app
 
         log.info("The first iteration:")
-        #self.widget.logbox.appendPlainText("The first iteration:")
-
+        manage_subfolders(path)
         # Load an image
         self.orig_photo, self.output = self._load_image()
         self.orig_photo_copy = self.orig_photo.copy()
@@ -265,29 +78,32 @@ class ImageCrawler(list):
         log.info("The second iteration:")
         # Now, find objects from the first iteration in the same area in high resolution
         # Set area for finding object in high resolution
-        log.info(f"processing of {len(self.marked_objects)}")
+        log.info(f"processing of {len(self.marked_objects)} objects:")
         for index, q in enumerate(self.marked_objects):
             # identify corners of objects
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
             #if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
             # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes from the 1st iteraction in high resolution.
-            self.append(Flake(self, index,(x_min, x_max, y_min, y_max)))
+            self.append(Flake(self, index, (x_min, x_max, y_min, y_max)))
 
-        catalogue = ExcelOutput(self) # Create a catalogue from the list of flakes in an Excel table.
+        catalogue = ExcelOutput(self)  # Create a catalogue from the list of flakes in an Excel table.
 
         if not self.out1 == 1:
             self._clean() # Clean images of flakes in output folder.
 
-        return None
 
     def _load_image(self) -> (Image.Image, Image.Image):
         """Loads the image from the disk into a PIL Image object. """
         '''It finds and marks all object in the photo.'''
-        orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
-        log.info("The photo has been opened.")
-
-        log.info("changing gamma and contrast of the original photo")
+        if self.input_app == 0:
+            orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
+            log.info("The photo has been opened.")
+            log.info("changing gamma and contrast of the original photo")
+        elif self.input_app == 2:
+            orig_photo = Image.open(f"{self.path}/{self.name}")  # open the original photo
+            log.info("The photo has been opened.")
+            log.info("changing gamma and contrast of the original photo")
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
         # self.orig_photo.save(f"{self.path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
@@ -296,7 +112,7 @@ class ImageCrawler(list):
         output = Image.new('RGB', (orig_photo.size[0], orig_photo.size[1]), color='white')
         return orig_photo, output
 
-    def _find_objects_low_resolution(self):
+    def _find_objects_low_resolution(self) -> list:
         """
         It marks pixels having R, G, B bigger than the sensitivity value. It splits the image into a matrix which contains
         groups of 7×7 pixels (squares). If a square contains more than 60 % marked pixels, it is marked as marked_pixel.
@@ -433,7 +249,7 @@ class Flake:
         self.object_filename = f'{parent.path}/output/objects/{parent.name}_object{self.id}.png'
         self.parent = parent
 
-        print(f"{self.id + 1}, ", end="")
+        log.info(f"{round(100*(self.id + 1)/len(parent.marked_objects), 1)} %")
         self.output, self.output2 = self._load_image2()
         self.org = parent.orig_photo.load()
         self.new = self.output.load()
@@ -442,7 +258,7 @@ class Flake:
         self._measure()
 
 
-    def _load_image2(self):
+    def _load_image2(self) -> (Image.Image, Image.Image):
         '''Crop original image and make output images.'''
 
         output = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
@@ -451,7 +267,7 @@ class Flake:
         output2 = output.copy()
         return output, output2
 
-    def _find_objects_high_resolution(self):
+    def _find_objects_high_resolution(self) -> list:
         '''Detect object in higth resolution and delete too small objects.'''
         marked_pixel = []
 
@@ -744,6 +560,10 @@ class ExcelOutput:
         # set the width of the K-th column because of the image
         sheet.column_dimensions['K'].width = max_width * 0.15
 
+        return None
+
     def _save_to_disk(self):
         """Store the excel sheet on the filesystem"""
         self.workbook.save(self.filename)  # save Excel table
+
+        return None
