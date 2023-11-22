@@ -6,6 +6,9 @@ import cv2
 import shutil
 import os
 import logging as log
+from functions import manage_subfolders
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QLabel, QPlainTextEdit, QFileDialog
+
 
 def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
     '''
@@ -46,7 +49,8 @@ class ImageCrawler(list):
     Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding flakes
     from the 1st iteration in high resolution.
     """
-    def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
+    def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float,
+                 input_app=0):
         self.name = name  # The name of an image to load
         self.path = path  # The path of an image to load
         self.out1 = more_output  # Look at main.py (more_output)
@@ -56,11 +60,13 @@ class ImageCrawler(list):
         self.detected_object = [] # List of detected flakes. Every flake is a list of coordinates [x, y]
         self.workbook = 0  # Excel table for a new catalogue
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
+        self.input_app = input_app
 
         log.info("The first iteration:")
+        manage_subfolders(path)
         # Load an image
         self.orig_photo, self.output = self._load_image()
-        self.orig_photo_copy =self.orig_photo.copy()
+        self.orig_photo_copy = self.orig_photo.copy()
         self.pro = self.orig_photo_copy.load()
         self.new = self.output.load()
         # Find objects in the photo in low resolution
@@ -79,22 +85,26 @@ class ImageCrawler(list):
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
             #if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
             # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes from the 1st iteraction in high resolution.
-            self.append(Flake(self, index,(x_min, x_max, y_min, y_max)))
+            self.append(Flake(self, index, (x_min, x_max, y_min, y_max)))
 
-        catalogue = ExcelOutput(self) # Create a catalogue from the list of flakes in an Excel table.
+        catalogue = ExcelOutput(self)  # Create a catalogue from the list of flakes in an Excel table.
 
         if not self.out1 == 1:
             self._clean() # Clean images of flakes in output folder.
 
-        return None
 
     def _load_image(self) -> (Image.Image, Image.Image):
         """Loads the image from the disk into a PIL Image object. """
         '''It finds and marks all object in the photo.'''
-        orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
-        log.info("The photo has been opened.")
-
-        log.info("changing gamma and contrast of the original photo")
+        if self.input_app == 0:
+            orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
+            log.info("The photo has been opened.")
+            #log.info("changing gamma and contrast of the original photo")
+        elif self.input_app == 2:
+            orig_photo = Image.open(f"{self.path}/{self.name}")  # open the original photo
+            #starter.logbox.appendPlainText("The photo has been opened.") # it doesn't work
+            log.info("The photo has been opened.")
+            #log.info("changing gamma and contrast of the original photo")
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
         # self.orig_photo.save(f"{self.path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
@@ -240,7 +250,7 @@ class Flake:
         self.object_filename = f'{parent.path}/output/objects/{parent.name}_object{self.id}.png'
         self.parent = parent
 
-        log.info(f"{round(100*(self.id + 1)/len(parent.marked_objects), 0)} %")
+        log.info(f"{round(100*(self.id + 1)/len(parent.marked_objects), 1)} %")
         self.output, self.output2 = self._load_image2()
         self.org = parent.orig_photo.load()
         self.new = self.output.load()

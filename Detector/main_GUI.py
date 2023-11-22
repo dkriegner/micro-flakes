@@ -1,12 +1,9 @@
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QLabel, QPlainTextEdit, QFileDialog
+from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QLabel, QPlainTextEdit,
+                             QFileDialog, QStackedWidget)
 import sys
-from openpyxl import Workbook
-import cv2
 import os
-import shutil
 from find_objects import ImageCrawler
-from functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
-import argparse
+from functions import take_webcam_image
 import logging as log
 
 
@@ -14,6 +11,32 @@ class MyApp(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.initUI()
+
+    def initUI(self):
+        vbox = QVBoxLayout()
+        self.setLayout(vbox)
+
+        self.stackedWidget = QStackedWidget()
+        vbox.addWidget(self.stackedWidget)
+
+        self.welcome = Welcome(self.stackedWidget)
+        self.option1 = Option1()
+        self.option2 = Option2()
+
+        self.stackedWidget.addWidget(self.welcome)
+        self.stackedWidget.addWidget(self.option1)
+        self.stackedWidget.addWidget(self.option2)
+
+        self.setWindowTitle('Flakes detector')
+        self.setGeometry(300, 300, 300, 200)
+        self.show()
+
+class Welcome(QWidget):
+    def __init__(self, stackedWidget):
+        super().__init__()
+
+        self.stackedWidget = stackedWidget
         self.initUI()
 
     def initUI(self):
@@ -39,10 +62,10 @@ class MyApp(QWidget):
         self.show()
 
     def open_option1(self):
-        self.option1 = Option1()
+        self.stackedWidget.setCurrentIndex(1)
 
     def open_option2(self):
-        self.option2 = Option2()
+        self.stackedWidget.setCurrentIndex(2)
 
 
 class Option1(QWidget):
@@ -69,16 +92,16 @@ class Option1(QWidget):
         vbox.addWidget(self.label2)
 
         self.combobox = QComboBox()
-        self.combobox.addItems(["Yes", "No"])
+        self.combobox.addItems(["No", "Yes"])
         vbox.addWidget(self.combobox)
 
-        self.label3 = QLabel('Minimal area of edge of object in um^2:')
+        self.label3 = QLabel('Minimal area of edge of object in um^2 [42.4]:')
         vbox.addWidget(self.label3)
 
         self.textbox2 = QTextEdit()
         vbox.addWidget(self.textbox2)
 
-        self.label4 = QLabel('Sensitivity of script on objects in dark field:')
+        self.label4 = QLabel('Sensitivity of script on objects in dark field [40]:')
         vbox.addWidget(self.label4)
 
         self.textbox3 = QTextEdit()
@@ -92,7 +115,10 @@ class Option1(QWidget):
         self.logbox.setReadOnly(True)
         vbox.addWidget(self.logbox)
 
-        self.setWindowTitle('Option 1')
+        self.button3 = QPushButton('Open Catalogue in Excel')
+        self.button3.clicked.connect(self.on_click2)
+        vbox.addWidget(self.button3)
+
         self.setGeometry(300, 300, 300, 200)
         self.show()
 
@@ -111,13 +137,36 @@ class Option1(QWidget):
         path = str(self.directory)
         name = self.textbox.toPlainText()
         more_output = True if self.combobox.currentText() == "Yes" else False
-        min_size = float(self.textbox2.toPlainText())
-        sensitivity = int(self.textbox3.toPlainText())
-        self.logbox.appendPlainText(f'User entered: {name}, {self.directory}, {more_output}, {min_size}, {sensitivity}')
-        log.debug(f'User entered: {type(name)}, {self.directory}, {type(more_output)}, {type(min_size)}, {sensitivity}')
+
+        if self.textbox2.toPlainText():
+            min_size = float(self.textbox2.toPlainText()) / 1.6952
+        else:
+            min_size = 42.4 / 1.6952
+
+        if self.textbox3.toPlainText():
+            sensitivity = int(self.textbox3.toPlainText())
+        else:
+            sensitivity = 40
+
+        self.logbox.appendPlainText(f'Finding flakes with user\'s parameters:\n'
+                                    f'Path: {path}\nName: {name}\nMin. size: {min_size*1.6952}\nSensitivity: {sensitivity}')
+        log.debug(f'User entered: {name}, {path}, {more_output}, {min_size*1.6952}, {sensitivity}')
+
+        self.logbox.appendPlainText("Taking a new photo.")
+        take_webcam_image(path, name)
+        name += ".jpg"
 
         # Load an image, find all flakes and make a catalogue them.
         figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration, 2)
+        self.logbox.appendPlainText(f"The task has been finished. {len(figure1.marked_objects)} objects have been processed.\n"
+                                    f"The catalogue is saved to: {path}/output/Catalogue_{name}.xlsx")
+        self.output = f"{path}/output/Catalogue_{name}.xlsx"
+
+    def on_click2(self):
+        try:
+            os.system(self.output)
+        except:
+            self.logbox.appendPlainText("There is no output. Click to start!")
 
 
 class Option2(QWidget):
@@ -142,16 +191,16 @@ class Option2(QWidget):
         vbox.addWidget(self.label2)
 
         self.combobox = QComboBox()
-        self.combobox.addItems(["Yes", "No"])
+        self.combobox.addItems(["No", "Yes"])
         vbox.addWidget(self.combobox)
 
-        self.label3 = QLabel('Minimal area of edge of object in um^2:')
+        self.label3 = QLabel('Minimal area of edge of object in um^2 [42.4]:')
         vbox.addWidget(self.label3)
 
         self.textbox2 = QTextEdit()
         vbox.addWidget(self.textbox2)
 
-        self.label4 = QLabel('Sensitivity of script on objects in dark field:')
+        self.label4 = QLabel('Sensitivity of script on objects in dark field [40]:')
         vbox.addWidget(self.label4)
 
         self.textbox3 = QTextEdit()
@@ -165,7 +214,10 @@ class Option2(QWidget):
         self.logbox.setReadOnly(True)
         vbox.addWidget(self.logbox)
 
-        self.setWindowTitle('Option 2')
+        self.button3 = QPushButton('Open Catalogue in Excel')
+        self.button3.clicked.connect(self.on_click2)
+        vbox.addWidget(self.button3)
+
         self.setGeometry(300, 300, 300, 200)
         self.show()
 
@@ -173,7 +225,7 @@ class Option2(QWidget):
         self.fileName, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
                                                   "All Files (*);;Python Files (*.py)")
         if self.fileName:
-            self.logbox.appendPlainText(f'User selected file: {self.fileName}')
+            self.logbox.appendPlainText(f'Selected input file: {self.fileName}')
         else:
             self.logbox.appendPlainText('No file selected.')
 
@@ -182,19 +234,42 @@ class Option2(QWidget):
         calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
 
         # User input
-        path_name = str(self.fileName)
+        try:
+            path_name = str(self.fileName)
+        except:
+            self.logbox.appendPlainText('Nothing input is selected!')
+            return None
+
         index = path_name.rfind("/")
         name = path_name[index+1:]
-        path = path_name[:index-6]
+        path = path_name[:index]
         more_output = True if self.combobox.currentText() == "Yes" else False
-        min_size = float(self.textbox2.toPlainText())
-        sensitivity = int(self.textbox3.toPlainText())
-        self.logbox.appendPlainText(f'User entered: {path}, {name}, {more_output}, {min_size}, {sensitivity}')
-        print(f'User entered: {name}, {path}, {more_output}, {min_size}, {sensitivity}')
+
+        if self.textbox2.toPlainText():
+            min_size = float(self.textbox2.toPlainText())/1.6952
+        else:
+            min_size = 42.4/1.6952
+            
+        if self.textbox3.toPlainText():
+            sensitivity = int(self.textbox3.toPlainText())
+        else:
+            sensitivity = 40
+
+        self.logbox.appendPlainText(f'Finding flakes wit user\'s parameters:\n'
+                                    f'Path: {path}\nName: {name}\nMin. size: {min_size*1.6952}\nSensitivity: {sensitivity}')
+        log.debug(f'User entered: {name}, {path}, {more_output}, {min_size*1.6952}, {sensitivity}')
 
         # Load an image, find all flakes and make a catalogue them.
-        figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
-        self.logbox.appendPlainText("The task has been finished.")
+        figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration, 2)
+        self.logbox.appendPlainText(f"The task has been finished. {len(figure1.marked_objects)} objects have been processed.\n"
+                                    f"The catalogue is saved to: {path}/output/Catalogue_{name}.xlsx")
+        self.output = f"{path}/output/Catalogue_{name}.xlsx"
+
+    def on_click2(self):
+        try:
+            os.system(self.output)
+        except:
+            self.logbox.appendPlainText("There is no output. Click to start!")
 
 
 def main():
