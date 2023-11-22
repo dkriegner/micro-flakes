@@ -1,1 +1,0 @@
-This is an executable version of the detector of flakes for MS Windows.
