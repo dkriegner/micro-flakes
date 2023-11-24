@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QLabel, QPlainTextEdit,
-                             QFileDialog, QStackedWidget, QCheckBox, QSpinBox, QDoubleSpinBox, QHBoxLayout)
+from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QPlainTextEdit,
+                             QFileDialog, QCheckBox, QSpinBox, QDoubleSpinBox, QHBoxLayout)
 import sys
 import os
 from find_objects import ImageCrawler
@@ -8,15 +8,17 @@ import logging as log
 
 
 class MyApp(QWidget):
+    """Create a windows widget with user's input dialog."""
+
     def __init__(self):
         super().__init__()
 
         self.initUI()
 
     def initUI(self):
+        """The content of the window widget."""
         vbox = QVBoxLayout()
         self.setLayout(vbox)
-
 
         self.label0 = QLabel('Welcome in software to automatic detect flakes in a microscope.')
         vbox.addWidget(self.label0)
@@ -29,32 +31,38 @@ class MyApp(QWidget):
 
         self.button = QPushButton('Choose File')
         self.button.clicked.connect(self.open_file_dialog)
+        self.button.setToolTip('Open existing photo with Flakes in a microscope in the black field mode')
         hbox.addWidget(self.button)
 
         self.saveButton = QPushButton('Take a photo')
         self.saveButton.clicked.connect(self.save_file_dialog)
+        self.saveButton.setToolTip('Take a photo by a USB webcam with Flakes in a microscope in the black field mode')
         hbox.addWidget(self.saveButton)
 
         self.checkbox1 = QCheckBox('Do you want output images?')
         self.checkbox1.setChecked(False)  # Set the checkbox to be unchecked by default
+        self.checkbox1.setToolTip("Image from the first iteration. It\'s usable to control process.")
         vbox.addWidget(self.checkbox1)
 
-        self.label3 = QLabel('Minimal area of edge of object in um^2 [42.4]:')
+        self.label3 = QLabel('Minimal area of edge of object in um^2:')
         vbox.addWidget(self.label3)
 
         self.spinbox = QDoubleSpinBox()
         self.spinbox.setValue(42.4)  # Set the default value
+        self.spinbox.setToolTip("Smaller flakes will be removed as noice.")
         vbox.addWidget(self.spinbox)
 
-        self.label4 = QLabel('Sensitivity of script on objects in dark field [40]:')
+        self.label4 = QLabel('Sensitivity of script on objects:')
         vbox.addWidget(self.label4)
 
         self.spinbox2 = QSpinBox()
         self.spinbox2.setValue(40)  # Set the default value
+        self.spinbox2.setToolTip("Ever pixel having RGB value bigger this value will be marked.")
         vbox.addWidget(self.spinbox2)
 
         self.button2 = QPushButton('Start')
         self.button2.clicked.connect(self.on_click)
+        self.button2.setToolTip("Find flakes.")
         vbox.addWidget(self.button2)
 
         self.logbox = QPlainTextEdit()
@@ -65,11 +73,22 @@ class MyApp(QWidget):
         self.button3.clicked.connect(self.on_click2)
         vbox.addWidget(self.button3)
 
+        hbox2 = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox2)
+
+        self.weblink = QLabel('<a href="https://github.com/dkriegner/micro-flakes/tree/main/Detector">Project webpage</a>')
+        self.weblink.setOpenExternalLinks(True)
+        hbox2.addWidget(self.weblink)
+
+        self.label5 = QLabel('Version 0.0.3')
+        hbox2.addWidget(self.label5)
+
         self.setWindowTitle('Flakes detector')
         self.setGeometry(300, 300, 300, 200)
         self.show()
 
     def open_file_dialog(self):
+        """Action of Choose File button."""
         self.fileName, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
                                                   "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
         if self.fileName:
@@ -78,8 +97,8 @@ class MyApp(QWidget):
             self.logbox.appendPlainText('No file selected.')
 
     def save_file_dialog(self):
-        self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
-                                                  "All Files (*)")
+        """Action of Take a photo button."""
+        self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "", "All Files (*)")
         if self.fileName:
             self.logbox.appendPlainText("Opening a webcam.\nPress Esc to take a new photo.")
             self.logbox.repaint()
@@ -91,10 +110,11 @@ class MyApp(QWidget):
             self.logbox.appendPlainText('No file saved.')
 
     def on_click(self):
+        """Action of Start button."""
         # Fixed setting parameters
         calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
 
-        # User input
+        # Get user input from the  windows widget.
         try:
             str(self.fileName)
         except:
@@ -120,6 +140,7 @@ class MyApp(QWidget):
         self.output = f"{path}/output/Catalogue_{name}.xlsx"
 
     def on_click2(self):
+        """Action of Open catalogue in Excel button."""
         try:
             os.system(self.output)
         except:
@@ -127,11 +148,11 @@ class MyApp(QWidget):
 
 
 def main():
-    # Fixed setting parameters
+    # set logging to terminal
     log.getLogger().setLevel(log.INFO)
     log.basicConfig(format='%(message)s')
-    calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
 
+    # Create window widget
     app = QApplication(sys.argv)
     ex = MyApp()
     sys.exit(app.exec())

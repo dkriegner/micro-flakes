@@ -1,12 +1,43 @@
+"""This file contains definitions of simple function."""
 import logging as log
 import cv2
 import os
 import shutil
+from PIL import Image
+
+
+def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
+    """
+    Change the gamma of a picture. The first parameter is a photo and second parameter is a gamma parameter.
+    The formula of function is?: new_RGB = ((RGB / 255)^(1 / gamma)) * 255.
+    """
+    row = im.size[0]
+    col = im.size[1]
+    result_img1 = Image.new(mode="RGB", size=(row, col), color=0)
+    for x in range(row):
+        for y in range(col):
+            r = pow(im.getpixel((x, y))[0] / 255, (1 / gamma1)) * 255
+            g = pow(im.getpixel((x, y))[1] / 255, (1 / gamma1)) * 255
+            b = pow(im.getpixel((x, y))[2] / 255, (1 / gamma1)) * 255
+            color = (int(r), int(g), int(b))
+            result_img1.putpixel((x, y), color)
+    return result_img1
+
+
+def change_contrast(img: Image.Image, level: float) -> Image.Image:
+    """
+    Change the gamma of a picture. The first parameter is a photo and second parameter is a contrast parameter.
+    The formula of function is?: new_RGB = 128 + (259 * (contrast + 255)) / (255 * (259 - contrast)) * (RGB - 128).
+    """
+    factor = (259 * (level + 255)) / (255 * (259 - level))
+    def contrast(c):
+        return 128 + factor * (c - 128)
+    return img.point(contrast)
 
 
 def take_webcam_image(path: str, filename: str):
-    '''This function takes a photo by a USB webcam. The first parameter is the path of a new photo.
-    The second parameter is the name of a new photo.'''
+    """This function takes a photo by a USB webcam. The first parameter is the path of a new photo.
+    The second parameter is the name of a new photo."""
     cap = cv2.VideoCapture(0, cv2.CAP_MSMF)
     # cap.set(14, 500) # gain
     # Turn off auto exposure
@@ -32,6 +63,7 @@ def take_webcam_image(path: str, filename: str):
     cv2.destroyAllWindows()
     return None
 
+
 def float_question(question: str, default: float | None = None) -> float:
     """Get a float answer for a question."""
     choices = f' [{default}]: ' if default else ':'
@@ -41,6 +73,7 @@ def float_question(question: str, default: float | None = None) -> float:
     except (ValueError, TypeError):
         log.warning("invalid input! try again")  # optional print message
         return float_question(question, default)
+
 
 def RGB_question(question: int, default: int | None = None) -> int:
     """Get an integer answer between 0 and 255 for a question."""
@@ -57,6 +90,7 @@ def RGB_question(question: int, default: int | None = None) -> int:
         log.warning("invalid input! try again")  # optional print message
         return float_question(question, default)
 
+
 def yes_no_question(question: str, default: bool = True) -> bool:
     """Get boolean answer for a question."""
     choices = ' [Y/n]: ' if default else ' [y/N]:'
@@ -70,8 +104,9 @@ def yes_no_question(question: str, default: bool = True) -> bool:
         log.warning("invalid input! try again")  # optional print message
         return yes_no_question(question, default)
 
+
 def manage_subfolders(path: str):
-    '''Create the output and input subfolder or clean the output subfolder'''
+    """Create the output and input subfolder or clean the output subfolder"""
     path1 = path
     path2 = "output\\objects"
     if not os.path.exists(os.path.join(path1, "input")):
@@ -83,7 +118,7 @@ def manage_subfolders(path: str):
     os.makedirs(os.path.join(path1, path2))
 
 def read_cache() -> str:
-    '''Open existing a cache file or reate a new chache file.'''
+    """Open existing a cache file or reate a new chache file."""
     try:
         cache = open(r"CACHE", "r")
     except:

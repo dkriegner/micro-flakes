@@ -1,3 +1,4 @@
+"""This file contains definitions of objects."""
 from PIL import Image, ImageDraw
 import numpy as np
 from openpyxl import Workbook
@@ -6,37 +7,7 @@ import cv2
 import shutil
 import os
 import logging as log
-from functions import manage_subfolders
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QTextEdit, QComboBox, QLabel, QPlainTextEdit, QFileDialog
-
-
-def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
-    '''
-    Change the gamma of a picture. The first parameter is a photo and second parameter is a gamma parameter.
-    The formala of function is?: new_RGB = ((RGB / 255)^(1 / gamma)) * 255.
-    '''
-    row = im.size[0]
-    col = im.size[1]
-    result_img1 = Image.new(mode="RGB", size=(row, col), color=0)
-    for x in range(row):
-        for y in range(col):
-            r = pow(im.getpixel((x, y))[0] / 255, (1 / gamma1)) * 255
-            g = pow(im.getpixel((x, y))[1] / 255, (1 / gamma1)) * 255
-            b = pow(im.getpixel((x, y))[2] / 255, (1 / gamma1)) * 255
-            color = (int(r), int(g), int(b))
-            result_img1.putpixel((x, y), color)
-    return result_img1
-
-
-def change_contrast(img: Image.Image, level: float) -> Image.Image:
-    '''
-    Change the gamma of a picture. The fistr parametr is a photo and second parametr is a contrast parametr.
-    The formala of function is?: new_RGB = 128 + (259 * (contrast + 255)) / (255 * (259 - contrast)) * (RGB - 128).
-    '''
-    factor = (259 * (level + 255)) / (255 * (259 - level))
-    def contrast(c):
-        return 128 + factor * (c - 128)
-    return img.point(contrast)
+from .functions import manage_subfolders, gamma_correct, change_contrast
 
 
 class ImageCrawler(list):
@@ -104,10 +75,9 @@ class ImageCrawler(list):
             orig_photo = Image.open(f"{self.path}/{self.name}")  # open the original photo
             #starter.logbox.appendPlainText("The photo has been opened.") # it doesn't work
             log.info("The photo has been opened.")
-            #log.info("changing gamma and contrast of the original photo")
+            #log.info("changing gamma and contrast of the original photo") # deactivated
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
-        # self.orig_photo.save(f"{self.path}/output/org_gc.png")  # save the original photo with gamma and contrast correction
 
         # create new images for processing (object area in low resolution)
         output = Image.new('RGB', (orig_photo.size[0], orig_photo.size[1]), color='white')
@@ -124,7 +94,7 @@ class ImageCrawler(list):
         """
 
         marked_pixel = []  # A list of (x, y) coordinates of marked squares of 7 by 7 pixels.
-        marked_objects = [] # A list of detected object which is represented by a list of (x, y) coordinates
+        marked_objects = []  # A list of detected object which is represented by a list of (x, y) coordinates
 
         log.info("marking non-black area")
         for i in range(self.orig_photo.size[0] - 1):
@@ -219,14 +189,14 @@ class ImageCrawler(list):
         return None
 
     def _clean(self):
-        '''Clean output images from the 2nd interaction in ../output/objects.'''
+        """Clean output images from the 2nd interaction in ../output/objects."""
         shutil.rmtree(os.path.join(self.path, "output\\objects"))
         return None
 
 class Flake:
     """
     Represents and processes an identified object on an image. At first, self._load_image2 load the original image
-    to self.edit_orig_photo and crops to self.output and self.output2. The 2nd and 3rd image conteins only one object.
+    to self.edit_orig_photo and crops to self.output and self.output2. The 2nd and 3rd image contains only one object.
     The next function (self._find_objects_high_resolution) makes the same procedure as self._find_objects_low_resolution
     in ImageCrawler in high resolution. Now the function operates with squares 3×3 pixels. The output of this function
     is self.marked_object2. It has the same structure as self.marked_object in ImageCrawler. The 3rd function
@@ -234,7 +204,7 @@ class Flake:
     """
     def __init__(self, parent: ImageCrawler, identifier: int, coordinates: (int, int, int, int)):
         """Process flake in high resolution."""
-        #claibration for convertin to the real size
+        # calibration for converting to the real size
         self.calib = parent.calibration
         # define all needed properties of a flake
         self.id = identifier  # identification number
@@ -243,8 +213,8 @@ class Flake:
         self.height = 0  # height of an object in pixels
         self.bright2 = 0  # The sum of RGB values of all pixels of an object
         self.centre = (0, 0)  # (x, y) coordinates of centre of an object
-        self.size = 0  # The area of edges of an object in a conture mode
-        self.full_size = 0  # The area of the whole object in a conture mode
+        self.size = 0  # The area of edges of an object in a contour mode
+        self.full_size = 0  # The area of the whole object in a contour mode
         self.size2 = 0  # The area of edges of an object in a mode of marked pixel in the original image
         self.full_size2 = 0  # The area of the whole object in a mode of marked pixel in the original image
         self.object_filename = f'{parent.path}/output/objects/{parent.name}_object{self.id}.png'
@@ -258,18 +228,16 @@ class Flake:
         self.marked_object2 = self._find_objects_high_resolution()
         self._measure()
 
-
     def _load_image2(self) -> (Image.Image, Image.Image):
-        '''Crop original image and make output images.'''
+        """Crop original image and make output images"""
 
         output = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
-                               self.coordinates[3] - self.coordinates[2] + 8),
-                       color='white')  # create a new image
+                               self.coordinates[3] - self.coordinates[2] + 8), color='white')  # create a new image
         output2 = output.copy()
         return output, output2
 
     def _find_objects_high_resolution(self) -> list:
-        '''Detect object in higth resolution and delete too small objects.'''
+        """Crop original image a detect object in height resolution and delete too small objects."""
         marked_pixel = []
 
         # Crop original photo
@@ -282,6 +250,7 @@ class Flake:
                     self.org[i, j] = (256, 0, 0)
         self.output.save(self.object_filename)  # storage image n-th objects
 
+        # Mark light pixels
         for i in range(self.coordinates[0] - 4, self.coordinates[1] - 1 + 4, 2):
             for j in range(self.coordinates[2] - 4, self.coordinates[3] - 1 + 4, 2):
                 red = 0
@@ -299,6 +268,7 @@ class Flake:
 
         marked_object = []
 
+        # Connect neighbouring pixel to object
         i = 0
         while len(marked_pixel) > 0:
             seed = marked_pixel[0]
@@ -323,18 +293,20 @@ class Flake:
             marked_object.append(queue)
             i += 1
 
+        # remove too small object
         for obj in marked_object.copy():
             if len(obj) <= self.parent.min_size:
                 marked_object.remove(obj)
 
-        self.best = 0
-        if len(marked_object) == 1:
+        # Choose the bigger object and store to output image (red and white)
+        self.best = 0  # index of biggest object
+        if len(marked_object) == 1:  # if only one object was detected
             for n in marked_object:
                 for (i, j) in n:
                     for k in range(i - 1, i + 1):
                         for l in range(j - 1, j + 1):
                             self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (256, 0, 0)
-        elif len(marked_object) > 1:
+        elif len(marked_object) > 1:  # if more object were detected
             mx = max(len(x) for x in marked_object)
             for n in marked_object:
                 if len(n) == mx:
@@ -342,12 +314,12 @@ class Flake:
                     for (i, j) in n:
                         for k in range(i - 1, i + 1):
                             for l in range(j - 1, j + 1):
-                                self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (
-                                256, 0, 0)
+                                self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (256, 0, 0)
         return marked_object
 
     def _measure(self):
-        '''Measure coordinates, size, height of a object.'''
+        """Measure coordinates of centre of gravity, size, height of an object."""
+        # measure centre
         self.centre = ((int(sum(x for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best])),
                    int(sum(y for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best]))))
 
@@ -365,10 +337,10 @@ class Flake:
         #shape = cv2.cvtColor(shape, cv2.COLOR_GRAY2RGB) # It doesn't work.
         #shape = Image.fromarray(shape)
 
-        shape = Image.open(self.object_filename[:-4] + "_contures.png")  # open photo in defferent library
+        shape = Image.open(self.object_filename[:-4] + "_contures.png")  # open photo in different library
         pc = shape.load()
 
-        # calculate size of the object (new)
+        # calculate area of the object from the contour output image
         x_min = x_max = 0
         for i in range(shape.size[0]):
             white = 0
@@ -384,7 +356,7 @@ class Flake:
             self.full_size += (x_max - x_min)
             x_min = x_max = 0
 
-        # calculate size of the object (old)
+        # calculate area of the object from the red and white output image
         x_min = x_max = 0
         for i in range(self.output2.size[0] - 3):
             red = 0
@@ -403,6 +375,7 @@ class Flake:
         if self.parent.out1 == 1:
             self.output2.save(self.object_filename[:-4] + "_marked.png")  # store photo of area of detect object
 
+        # get size of the image
         self.width, self.height = self.output.size
         return None
 

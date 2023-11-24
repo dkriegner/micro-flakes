@@ -1,14 +1,12 @@
-from openpyxl import Workbook
-import cv2
 import os
-import shutil
 from .find_objects import ImageCrawler
 from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
 import argparse
 import logging as log
 
+
 def dialog() -> (str, str, bool, float, int):
-    '''Ask the user to input parameters'''
+    """Ask the user to input parameters"""
     print("Welcome in software to automatics detect object in microscope.")
     print("For default value write \"d\".\n")
 
@@ -57,6 +55,7 @@ def dialog() -> (str, str, bool, float, int):
 
     return path, name, more_output, min_size, sensitivity
 
+
 def line_command() -> (str, str, bool, float, int):
     # Load a set parameters via the command line
     parser = argparse.ArgumentParser()
@@ -87,6 +86,7 @@ def line_command() -> (str, str, bool, float, int):
 
     return args.path, args.name, args.out1, args.min_size, args.sensitivity
 
+
 def main():
     # Show info messages
     log.getLogger().setLevel(log.INFO)
@@ -96,7 +96,7 @@ def main():
 
     path, name, more_output, min_size, sensitivity = line_command() # Try to read a line-command input.
 
-    if path == None: # If there is no parameter from command line
+    if path == None:  # If there is no parameter from command line
         # Print a welcome screen and ask user's inputs. This funftion can make a new image by a USB webcam.
         path, name, more_output, min_size, sensitivity = dialog()
 
@@ -104,3 +104,4 @@ def main():
     figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")
+
