@@ -1,5 +1,7 @@
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QPlainTextEdit,
                              QFileDialog, QCheckBox, QSpinBox, QDoubleSpinBox, QHBoxLayout)
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 import sys
 import os
 from find_objects import ImageCrawler
@@ -80,10 +82,12 @@ class MyApp(QWidget):
         self.weblink.setOpenExternalLinks(True)
         hbox2.addWidget(self.weblink)
 
-        self.label5 = QLabel('Version 0.0.3')
+        self.label5 = QLabel('Version 0.0.4')
+        self.label5.setAlignment(Qt.AlignmentFlag.AlignRight)
         hbox2.addWidget(self.label5)
 
         self.setWindowTitle('Flakes detector')
+        self.setWindowIcon(QIcon('ICON.ico'))  # Set the window icon
         self.setGeometry(300, 300, 300, 200)
         self.show()
 
