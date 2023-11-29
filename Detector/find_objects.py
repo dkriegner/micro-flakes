@@ -47,6 +47,7 @@ class ImageCrawler(list):
             self._output_marked_objects()
 
         log.info("The second iteration:")
+        print("The second iteration:")
         # Now, find objects from the first iteration in the same area in high resolution
         # Set area for finding object in high resolution
         log.info(f"processing of {len(self.marked_objects)} objects:")
@@ -334,10 +335,9 @@ class Flake:
         shape = cv2.cvtColor(shape, cv2.COLOR_BGR2GRAY)
         shape = cv2.Canny(shape, 300, 100)
         cv2.imwrite(self.object_filename[:-4] + "_contures.png", shape)
-        #shape = cv2.cvtColor(shape, cv2.COLOR_GRAY2RGB) # It doesn't work.
-        #shape = Image.fromarray(shape)
+        shape = cv2.cvtColor(shape, cv2.COLOR_BGR2RGB)
+        shape = Image.fromarray(shape)
 
-        shape = Image.open(self.object_filename[:-4] + "_contures.png")  # open photo in different library
         pc = shape.load()
 
         # calculate area of the object from the contour output image
@@ -345,12 +345,12 @@ class Flake:
         for i in range(shape.size[0]):
             white = 0
             for j in range(shape.size[1]):
-                W = pc[i, j]
-                if W == 255 and white == 0:
+                R = pc[i, j][0]
+                if R == 255 and white == 0:
                     white = 1
                     self.size += 1
                     x_min = j
-                elif W == 255 and white == 1:
+                elif R == 255 and white == 1:
                     self.size += 1
                     x_max = j
             self.full_size += (x_max - x_min)

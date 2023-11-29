@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QPlainTextEdit,
                              QFileDialog, QCheckBox, QSpinBox, QDoubleSpinBox, QHBoxLayout)
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QObject, pyqtSignal
 from PyQt6.QtGui import QIcon
 import sys
 import os
@@ -8,6 +8,19 @@ from find_objects import ImageCrawler
 from functions import take_webcam_image
 import logging as log
 
+
+class EmittingStream(QObject):
+    """
+    Stream to communicate between the threads
+    """
+    name = "GUIStream"
+    text_written = pyqtSignal(str)
+
+    def write(self, text):
+        self.text_written.emit(str(text))
+
+    def flush(self):
+        pass
 
 class MyApp(QWidget):
     """Create a windows widget with user's input dialog."""
@@ -46,21 +59,33 @@ class MyApp(QWidget):
         self.checkbox1.setToolTip("Image from the first iteration. It\'s usable to control process.")
         vbox.addWidget(self.checkbox1)
 
+        hbox4 = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox4)
+
         self.label3 = QLabel('Minimal area of edge of object in um^2:')
-        vbox.addWidget(self.label3)
+        hbox4.addWidget(self.label3)
 
         self.spinbox = QDoubleSpinBox()
         self.spinbox.setValue(42.4)  # Set the default value
+        self.spinbox.setRange(0, 500)
+        # Set the width of the spinbox to 100 pixels
+        self.spinbox.setFixedWidth(100)
         self.spinbox.setToolTip("Smaller flakes will be removed as noice.")
-        vbox.addWidget(self.spinbox)
+        hbox4.addWidget(self.spinbox)
+
+        hbox3 = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox3)
 
         self.label4 = QLabel('Sensitivity of script on objects:')
-        vbox.addWidget(self.label4)
+        hbox3.addWidget(self.label4)
 
         self.spinbox2 = QSpinBox()
         self.spinbox2.setValue(40)  # Set the default value
+        self.spinbox2.setRange(0, 255)
+        self.spinbox2.setFixedWidth(100)
+
         self.spinbox2.setToolTip("Ever pixel having RGB value bigger this value will be marked.")
-        vbox.addWidget(self.spinbox2)
+        hbox3.addWidget(self.spinbox2)
 
         self.button2 = QPushButton('Start')
         self.button2.clicked.connect(self.on_click)
@@ -69,6 +94,9 @@ class MyApp(QWidget):
 
         self.logbox = QPlainTextEdit()
         self.logbox.setReadOnly(True)
+        # set outputStream as stdout (i.e. all output is written to status)
+        self.output_stream = EmittingStream(text_written=self.output_written)
+        sys.stdout = self.output_stream
         vbox.addWidget(self.logbox)
 
         self.button3 = QPushButton('Open Catalogue in Excel')
@@ -82,7 +110,7 @@ class MyApp(QWidget):
         self.weblink.setOpenExternalLinks(True)
         hbox2.addWidget(self.weblink)
 
-        self.label5 = QLabel('Version 0.0.4')
+        self.label5 = QLabel('Version 0.0.5')
         self.label5.setAlignment(Qt.AlignmentFlag.AlignRight)
         hbox2.addWidget(self.label5)
 
@@ -90,6 +118,19 @@ class MyApp(QWidget):
         self.setWindowIcon(QIcon('ICON.ico'))  # Set the window icon
         self.setGeometry(300, 300, 300, 200)
         self.show()
+
+    def output_written(self, text):
+        """
+        appends the most recent text to the end of the display and makes sure
+        that the cursor remains at the end
+        """
+        if text.strip("\n") != "":
+            self.logbox.appendPlainText(text.strip("\n"))
+            self.logbox.repaint()
+            try:
+                self.logbox.moveCursor(QTextCursor.MoveOperation.End)
+            except Exception:  # upon cleanup after exception this can fail
+                pass
 
     def open_file_dialog(self):
         """Action of Choose File button."""

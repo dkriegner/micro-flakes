@@ -1,6 +1,6 @@
 import os
-from .find_objects import ImageCrawler
-from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
+from find_objects import ImageCrawler
+from functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
 import argparse
 import logging as log
 
@@ -97,7 +97,7 @@ def main():
     path, name, more_output, min_size, sensitivity = line_command() # Try to read a line-command input.
 
     if path == None:  # If there is no parameter from command line
-        # Print a welcome screen and ask user's inputs. This funftion can make a new image by a USB webcam.
+        # Print a welcome screen and ask user's inputs. This function can make a new image by a USB webcam.
         path, name, more_output, min_size, sensitivity = dialog()
 
     # Load an image, find all flakes and make a catalogue them.
@@ -105,3 +105,4 @@ def main():
 
     input("\nThe task has been finished. Press some key for close a script.")
 
+main()
