@@ -8,7 +8,7 @@ import logging as log
 def dialog() -> (str, str, bool, float, int):
     """Ask the user to input parameters"""
     print("Welcome in software to automatics detect object in microscope.")
-    print("For default value write \"d\".\n")
+    print("Project webpage: https://github.com/dkriegner/micro-flakes/tree/main/Detector\nVersion: 0.0.5\n")
 
     # Load last working directory
     path = read_cache()
