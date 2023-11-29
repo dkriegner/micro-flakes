@@ -115,7 +115,7 @@ class MyApp(QWidget):
         hbox2.addWidget(self.label5)
 
         self.setWindowTitle('Flakes detector')
-        self.setWindowIcon(QIcon('ICON.ico'))  # Set the window icon
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), 'ICON.ico')))  # Set the window icon
         self.setGeometry(300, 300, 300, 200)
         self.show()
 
