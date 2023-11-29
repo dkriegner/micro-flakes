@@ -6,7 +6,7 @@ This software, designed to automatically detect objects under a microscope with 
 ## Instalation
 
 ### MS Windows
-It is available a GUI version for MS Windows on https://github.com/dkriegner/micro-flakes/releases/tag/. It is not instalable. For using, unzip this archive.
+It is available a GUI version for MS Windows on https://github.com/dkriegner/micro-flakes/tags. It is not instalable. For using, unzip this archive.
 
 ### Automatic (Opration-system-independent)
 This software can be installed by flit. Follow these steps:
