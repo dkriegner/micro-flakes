@@ -7,6 +7,7 @@ import cv2
 import shutil
 import os
 import logging as log
+from threading import Thread
 from functions import manage_subfolders, gamma_correct, change_contrast
 
 
@@ -51,18 +52,38 @@ class ImageCrawler(list):
         # Now, find objects from the first iteration in the same area in high resolution
         # Set area for finding object in high resolution
         log.info(f"processing of {len(self.marked_objects)} objects:")
+
         for index, q in enumerate(self.marked_objects):
             # identify corners of objects
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
             #if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
             # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes from the 1st iteraction in high resolution.
-            self.append(Flake(self, index, (x_min, x_max, y_min, y_max)))
+            self.append(Flake(self, index, (x_min, x_max, y_min, y_max))) # One parallel process (old)
 
-        catalogue = ExcelOutput(self)  # Create a catalogue from the list of flakes in an Excel table.
+        # Create an empty list of processes
+        processes = []
+        for index, flake in enumerate(self):
+            print(index)
+            #flake.start()
+            p = Thread(target=flake.start, args=())
+            # Add the process to the list
+            processes.append(p)
+            # Start the process
+            p.start()
+
+        # Wait for all the processes to finish
+        for p in processes:
+            p.join()
+
+        # Wait for all the processes to finish
+        for p in processes:
+            p.join()
+
+        ExcelOutput(self)  # Create a catalogue from the list of flakes in an Excel table.
 
         if not self.out1 == 1:
-            self._clean() # Clean images of flakes in output folder.
+            self._clean()  # Clean images of flakes in output folder.
 
 
     def _load_image(self) -> (Image.Image, Image.Image):
@@ -181,7 +202,7 @@ class ImageCrawler(list):
 
         # Marked light pixel in original picture
         self.orig_photo.save(f'{self.path}/output/{self.name}_first_step2.png')
-        # Marked squares with 7 by 7 (potentional object area in low resolution)
+        # Marked squares with 7 by 7 (potential object area in low resolution)
         self.output.save(f'{self.path}/output/{self.name}_first_step1.png')
         # stored objects with a centre and an area of edge
         ts.save(f'{self.path}/output/{self.name}_first_step3.png')
@@ -220,14 +241,17 @@ class Flake:
         self.full_size2 = 0  # The area of the whole object in a mode of marked pixel in the original image
         self.object_filename = f'{parent.path}/output/objects/{parent.name}_object{self.id}.png'
         self.parent = parent
+        print(parent)
 
-        log.info(f"{round(100*(self.id + 1)/len(parent.marked_objects), 1)} %")
+    def start(self):
+        log.info(f"{round(100*(self.id + 1)/len(self.parent.marked_objects), 1)} %")
         self.output, self.output2 = self._load_image2()
-        self.org = parent.orig_photo.load()
+        self.org = self.parent.orig_photo.load()
         self.new = self.output.load()
         self.test = self.output2.load()
         self.marked_object2 = self._find_objects_high_resolution()
         self._measure()
+        return None
 
     def _load_image2(self) -> (Image.Image, Image.Image):
         """Crop original image and make output images"""

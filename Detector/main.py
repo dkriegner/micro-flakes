@@ -87,7 +87,8 @@ def line_command() -> (str, str, bool, float, int):
     return args.path, args.name, args.out1, args.min_size, args.sensitivity
 
 
-def main():
+# def main():  # Deactivated because of multiprocessing
+if __name__ == "__main__":
     # Show info messages
     log.getLogger().setLevel(log.INFO)
 
@@ -104,5 +105,3 @@ def main():
     figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")
-
-main()

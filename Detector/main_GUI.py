@@ -94,6 +94,7 @@ class MyApp(QWidget):
 
         self.logbox = QPlainTextEdit()
         self.logbox.setReadOnly(True)
+        self.logbox.setMinimumSize(350, 150)
         # set outputStream as stdout (i.e. all output is written to status)
         self.output_stream = EmittingStream(text_written=self.output_written)
         sys.stdout = self.output_stream
