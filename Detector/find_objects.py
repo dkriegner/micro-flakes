@@ -64,8 +64,6 @@ class ImageCrawler(list):
         # Create an empty list of processes
         processes = []
         for index, flake in enumerate(self):
-            print(index)
-            #flake.start()
             p = Thread(target=flake.start, args=())
             # Add the process to the list
             processes.append(p)
