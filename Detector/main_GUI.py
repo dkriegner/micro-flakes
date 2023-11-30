@@ -1,12 +1,16 @@
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QPlainTextEdit,
                              QFileDialog, QCheckBox, QSpinBox, QDoubleSpinBox, QHBoxLayout)
 from PyQt6.QtCore import Qt, QObject, pyqtSignal
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QTextCursor
 import sys
 import os
-from find_objects import ImageCrawler
-from functions import take_webcam_image
+from .find_objects import ImageCrawler
+from .functions import take_webcam_image
 import logging as log
+
+# set logging to terminal
+log.getLogger().setLevel(log.INFO)
+logger = log.getLogger(os.path.split(__file__)[-1])
 
 
 class EmittingStream(QObject):
@@ -98,6 +102,12 @@ class MyApp(QWidget):
         # set outputStream as stdout (i.e. all output is written to status)
         self.output_stream = EmittingStream(text_written=self.output_written)
         sys.stdout = self.output_stream
+        # add new handler to logger
+        handler = log.StreamHandler(self.output_stream)
+        handler.setLevel(log.DEBUG)
+        formatter = log.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
         vbox.addWidget(self.logbox)
 
         self.button3 = QPushButton('Open Catalogue in Excel')
@@ -111,7 +121,7 @@ class MyApp(QWidget):
         self.weblink.setOpenExternalLinks(True)
         hbox2.addWidget(self.weblink)
 
-        self.label5 = QLabel('Version 0.0.5')
+        self.label5 = QLabel('Version 0.0.6')
         self.label5.setAlignment(Qt.AlignmentFlag.AlignRight)
         hbox2.addWidget(self.label5)
 
@@ -119,6 +129,9 @@ class MyApp(QWidget):
         self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), 'ICON.ico')))  # Set the window icon
         self.setGeometry(300, 300, 300, 200)
         self.show()
+        print("test print3")
+        logger.info("test log3")
+
 
     def output_written(self, text):
         """
@@ -159,7 +172,8 @@ class MyApp(QWidget):
         """Action of Start button."""
         # Fixed setting parameters
         calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
-
+        print("test print2")
+        logger.info("test log2")
         # Get user input from the  windows widget.
         try:
             str(self.fileName)
@@ -194,9 +208,16 @@ class MyApp(QWidget):
 
 
 def main():
-    # set logging to terminal
-    log.getLogger().setLevel(log.INFO)
-    log.basicConfig(format='%(message)s')
+    if os.name == 'nt':
+        try:
+            from ctypes import windll  # Only exists on Windows.
+
+            myappid = f'python.micro-flakes.gui.version'
+            windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except ImportError:
+            pass
+
+
 
     # Create window widget
     app = QApplication(sys.argv)
@@ -204,4 +225,4 @@ def main():
     sys.exit(app.exec())
 
 
-main()  # For debuging in a code editor. Remove before install.
+#main()  # For debuging in a code editor. Remove before install.

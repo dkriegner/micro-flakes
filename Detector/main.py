@@ -1,6 +1,6 @@
 import os
-from find_objects import ImageCrawler
-from functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
+from .find_objects import ImageCrawler
+from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
 import argparse
 import logging as log
 
@@ -8,7 +8,7 @@ import logging as log
 def dialog() -> (str, str, bool, float, int):
     """Ask the user to input parameters"""
     print("Welcome in software to automatics detect object in microscope.")
-    print("Project webpage: https://github.com/dkriegner/micro-flakes/tree/main/Detector\nVersion: 0.0.5\n")
+    print("Project webpage: https://github.com/dkriegner/micro-flakes/tree/main/Detector\nVersion: 0.0.6\n")
 
     # Load last working directory
     path = read_cache()
@@ -105,4 +105,4 @@ def main():
 
     input("\nThe task has been finished. Press some key for close a script.")
 
-main()
+#main()  # For debuging in a code editor. Remove before install.

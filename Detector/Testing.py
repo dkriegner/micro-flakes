@@ -1,68 +1,91 @@
-from multiprocessing import Process, Manager
+import os
+import sys
+import logging
+
+from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPlainTextEdit
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(os.path.split(__file__)[-1])
 
 
-class Start:
-    def __init__(self, name, age):
-        self.name = name
-        self.age = age
-        #child = Child(self)
-        processes = []
-        for i in range(10):
-            p = Process(target=Child, args=(self.name, self.age))
-            # Add the process to the list
-            processes.append(p)
-            # Start the process
-            p.start()
+class EmittingStream(QObject):
+    """
+    Stream to communicate between the threads
+    """
+    name = "GUIStream"
+    text_written = pyqtSignal(str)
 
-            # Wait for all the processes to finish
-        for p in processes:
-            p.join()
+    def write(self, text):
+        self.text_written.emit(str(text))
 
-    def test(self):
-
-        # Call the greet method of the child
-        print(f"Hello, I am {self.name} and I am {self.age} years old.")
+    def flush(self):
+        pass
 
 
-# Define a custom class called Child that inherits from Parent
-class Child:
-    def __init__(self, name, age):
-        # Call the parent constructor with the parent name
-        self.name = name
-        # Assign the age argument to the self age attribute
-        self.age = age
-        # Print the name and age of the child
-        print(f"Hello, I am {self.name} and I am {self.age} years old.")
+class MyMainWindow(QMainWindow):
 
+    def __init__(self):
+        super().__init__()
+        self.create_GUI_status()
+        self.show()
 
+    def create_GUI_status(self):
+        self.status = QPlainTextEdit(self)
+        self.status.setReadOnly(True)
 
-def none():   # Create a manager object
-    manager = Manager()
+        # set outputStream as stdout (i.e. all output is written to status)
+        self.output_stream = EmittingStream(text_written=self.output_written)
+        sys.stdout = self.output_stream
+        # add new handler to logger
+        handler = logging.StreamHandler(self.output_stream)
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
-    # Create a shared list of child objects
-    child_list = manager.list()
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.status)
+        self.widget = QWidget()
+        self.widget.setLayout(self.layout)
 
-    # Create an empty list of processes
-    processes = []
+        self.setCentralWidget(self.widget)
 
-    # Create four parent objects with different names
-    parents = [Parent("Alice"), Parent("Bob"), Parent("Charlie"), Parent("David")]
+        print("test print")
+        logger.info("test log")
 
-    # Create four processes that run the create_child function with different arguments
-    for parent, age in zip(parents, [10, 12, 11, 9]):
-        # Create a process object
-        p = Process(target=create_child, args=(parent, age, child_list))
-        # Add the process to the list
-        processes.append(p)
-        # Start the process
-        p.start()
+    def output_written(self, text):
+        """
+        appends the most recent text to the end of the display and makes sure
+        that the cursor remains at the end
+        """
+        if text.strip("\n") != "":
+            self.status.appendPlainText(text.strip("\n"))
+            try:
+                self.status.moveCursor(QTextCursor.MoveOperation.End)
+            except Exception:  # upon cleanup after exception this can fail
+                pass
 
-    # Wait for all the processes to finish
-    for p in processes:
-        p.join()
-
-    # Print the shared list of child objects
-    print(child_list)
 
 if __name__ == "__main__":
-    child = Start("Ahoj", 10)
+
+    if os.name == 'nt':
+        try:
+            from ctypes import windll  # Only exists on Windows.
+
+            myappid = f'python.micro-flakes.gui.version'
+            windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+        except ImportError:
+            pass
+
+    app = QApplication(sys.argv)
+    app.setDesktopFileName(
+        f"python.micro-flakes.gui")
+
+    print("test to terminal")
+    logger.info("test log before main window")
+    mainwin = MyMainWindow()
+    ret = app.exec()
+
+    sys.stdout = sys.__stdout__  # reset stdout
+    sys.exit(ret)

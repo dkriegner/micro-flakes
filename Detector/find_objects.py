@@ -8,7 +8,10 @@ import shutil
 import os
 import logging as log
 from threading import Thread
-from functions import manage_subfolders, gamma_correct, change_contrast
+from .functions import manage_subfolders, gamma_correct, change_contrast
+# set logging to terminal
+log.getLogger().setLevel(log.INFO)
+logger = log.getLogger(os.path.split(__file__)[-1])
 
 
 class ImageCrawler(list):
@@ -34,7 +37,10 @@ class ImageCrawler(list):
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
         self.input_app = input_app
 
-        log.info("The first iteration:")
+        print("test print")
+        logger.info("test log")
+
+        logger.info("The first iteration:")
         manage_subfolders(path)
         # Load an image
         self.orig_photo, self.output = self._load_image()
@@ -47,11 +53,10 @@ class ImageCrawler(list):
         if self.out1 == 1:
             self._output_marked_objects()
 
-        log.info("The second iteration:")
-        print("The second iteration:")
+        logger.info("The second iteration:")
         # Now, find objects from the first iteration in the same area in high resolution
         # Set area for finding object in high resolution
-        log.info(f"processing of {len(self.marked_objects)} objects:")
+        logger.info(f"processing of {len(self.marked_objects)} objects:")
 
         for index, q in enumerate(self.marked_objects):
             # identify corners of objects
@@ -89,13 +94,13 @@ class ImageCrawler(list):
         '''It finds and marks all object in the photo.'''
         if self.input_app == 0:
             orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
-            log.info("The photo has been opened.")
-            #log.info("changing gamma and contrast of the original photo")
+            logger.info("The photo has been opened.")
+            #logger.info("changing gamma and contrast of the original photo")
         elif self.input_app == 2:
             orig_photo = Image.open(f"{self.path}/{self.name}")  # open the original photo
             #starter.logbox.appendPlainText("The photo has been opened.") # it doesn't work
-            log.info("The photo has been opened.")
-            #log.info("changing gamma and contrast of the original photo") # deactivated
+            logger.info("The photo has been opened.")
+            #logger.info("changing gamma and contrast of the original photo") # deactivated
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
 
@@ -116,14 +121,14 @@ class ImageCrawler(list):
         marked_pixel = []  # A list of (x, y) coordinates of marked squares of 7 by 7 pixels.
         marked_objects = []  # A list of detected object which is represented by a list of (x, y) coordinates
 
-        log.info("marking non-black area")
+        logger.info("marking non-black area")
         for i in range(self.orig_photo.size[0] - 1):
             for j in range(self.orig_photo.size[1] - 1):
                 R, G, B = self.pro[i, j]
                 if R > self.sensitivity or G > self.sensitivity or B > self.sensitivity:
                     self.pro[i, j] = (255, 0, 0)
 
-        log.info("finding object area")
+        logger.info("finding object area")
         for i in range(3, self.orig_photo.size[0] - 4, 6):
             for j in range(3, self.orig_photo.size[1] - 4, 6):
                 red = 0  # number of red pixels
@@ -140,7 +145,7 @@ class ImageCrawler(list):
                                 self.new[k, l] = (255, 0, 0)
                         marked_pixel.append((i, j))
 
-        log.info("finding whole objects")
+        logger.info("finding whole objects")
 
         marked_pixel = np.array(marked_pixel)
 
@@ -166,7 +171,7 @@ class ImageCrawler(list):
 
             marked_objects.append(queue)
 
-        log.info("deleting too small object")
+        logger.info("deleting too small object")
         for obj in marked_objects.copy():
             if len(obj) <= self.min_size:
                 marked_objects.remove(obj)
@@ -239,10 +244,9 @@ class Flake:
         self.full_size2 = 0  # The area of the whole object in a mode of marked pixel in the original image
         self.object_filename = f'{parent.path}/output/objects/{parent.name}_object{self.id}.png'
         self.parent = parent
-        print(parent)
 
     def start(self):
-        log.info(f"{round(100*(self.id + 1)/len(self.parent.marked_objects), 1)} %")
+        logger.info(f"{round(100*(self.id + 1)/len(self.parent.marked_objects), 1)} %")
         self.output, self.output2 = self._load_image2()
         self.org = self.parent.orig_photo.load()
         self.new = self.output.load()
