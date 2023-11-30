@@ -48,6 +48,8 @@ def take_webcam_image(path: str, filename: str):
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
     # set exposure time
     cap.set(cv2.CAP_PROP_EXPOSURE, 0)
+    # Set the ISO sensitivity to the maximum value
+    # cap.set(cv2.CAP_PROP_ISO_SPEED, 10000)
     # set resolution
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 5472)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 3648)
@@ -58,10 +60,10 @@ def take_webcam_image(path: str, filename: str):
         ret, frame = cap.read()
         # cv2.normalize(frame, frame, 100, 255, cv2.NORM_MINMAX)
         # frame = cv2.resize(frame, None, fx=1, fy=1, interpolation=cv2.INTER_AREA)
-        cv2.imshow('Input', frame)
-        cv2.imwrite(filename=f'{path}/{filename}.jpg', img=frame)
-        c = cv2.waitKey(1)
-        if c == 27:
+        cv2.imshow('Webcam input', frame)
+        c = cv2.waitKey(30)
+        if c == 13:
+            cv2.imwrite(filename=f'{path}/{filename}.jpg', img=frame)
             break
     cap.release()
     cv2.destroyAllWindows()
