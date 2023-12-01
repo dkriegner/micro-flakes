@@ -1,5 +1,5 @@
 [project]
-name = "The Flakes detector"
+name = "Detector"
 version = "0.0.1"
 authors = [
   {name = "Jiri Zelenka", email = "jirka-zelenka@centrum.cz"},
@@ -18,10 +18,14 @@ dependencies = [
     "openpyxl >= 3.0.9",
     "opencv-python >= 4.6.0",
     "numpy >= 1.25.2",
+    "PyQt6",
 ]
 
 [project.scripts]
 flakes-detector = "Detector.main:main"
+
+[project.gui-scripts]
+flakes-detector-GUI = "Detector.main_GUI:main"
 
 [build-system]
 requires = ["flit_core >= 3.2, <4"]

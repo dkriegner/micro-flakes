@@ -28,6 +28,7 @@ To run this software, Python 3 and the following libraries are required:
 - openpyxl
 - cv2
 - numpy
+- PyQt6
 
 To install, use the following command:
 ```
