@@ -191,7 +191,10 @@ class MyApp(QWidget):
     def on_click2(self):
         """Action of Open catalogue in Excel button."""
         try:
-            os.system(self.output)
+            if sys.platform.startswith('win'):
+                os.system(self.output)
+            else:
+                os.system(f"xdg-open {self.output}")
         except:
             self.logbox.appendPlainText("There is no output. Click to start!")
 
