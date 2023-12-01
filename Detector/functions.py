@@ -114,7 +114,7 @@ def yes_no_question(question: str, default: bool = True) -> bool:
 def manage_subfolders(path: str):
     """Create the output and input subfolder or clean the output subfolder"""
     path1 = path
-    path2 = "output\\objects"
+    path2 = "output/objects"
     if not os.path.exists(os.path.join(path1, "input")):
         os.makedirs(os.path.join(path1, "input"))
     if not os.path.exists(os.path.join(path1, "output")):
