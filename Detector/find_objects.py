@@ -212,7 +212,7 @@ class ImageCrawler(list):
 
     def _clean(self):
         """Clean output images from the 2nd interaction in ../output/objects."""
-        shutil.rmtree(os.path.join(self.path, "output\\objects"))
+        shutil.rmtree(os.path.join(self.path, "output", "objects"))
         return None
 
 class Flake:
