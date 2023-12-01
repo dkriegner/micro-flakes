@@ -4,9 +4,11 @@ from PyQt6.QtCore import Qt, QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QIcon, QTextCursor
 import sys
 import os
-from find_objects import ImageCrawler
-from functions import take_webcam_image
 import logging as log
+
+from .find_objects import ImageCrawler
+from .functions import take_webcam_image
+
 
 class EmittingStream(QObject):
     """
@@ -21,10 +23,12 @@ class EmittingStream(QObject):
     def flush(self):
         pass
 
+
 class MyApp(QWidget):
     """Create a windows widget with user's input dialog."""
 
-    def __init__(self):
+    def __init__(self, log_stream):
+        self.log_stream = log_stream
         super().__init__()
 
         self.initUI()
@@ -94,8 +98,7 @@ class MyApp(QWidget):
         self.logbox = QPlainTextEdit()
         self.logbox.setReadOnly(True)
         self.logbox.setMinimumSize(350, 150)
-        sys.stdout = log_stream
-        log_stream.text_written.connect(self.output_written)
+        self.log_stream.text_written.connect(self.output_written)
         vbox.addWidget(self.logbox)
 
         self.button3 = QPushButton('Open Catalogue in Excel')
@@ -193,9 +196,10 @@ class MyApp(QWidget):
             self.logbox.appendPlainText("There is no output. Click to start!")
 
 
-if __name__ == "__main__":
+def main():
     handlers = []
     log_stream = EmittingStream()
+    sys.stdout = log_stream
     handlers.append(log.StreamHandler(stream=log_stream))
     log.basicConfig(level=log.INFO, handlers=handlers, format='%(message)s')
     logger = log.getLogger(os.path.split(__file__)[-1])
@@ -213,5 +217,5 @@ if __name__ == "__main__":
 
     # Create window widget
     app = QApplication(sys.argv)
-    ex = MyApp()
+    ex = MyApp(log_stream)
     sys.exit(app.exec())
