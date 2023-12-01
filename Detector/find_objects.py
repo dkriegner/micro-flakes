@@ -8,7 +8,7 @@ import shutil
 import os
 import logging as log
 from threading import Thread
-from functions import manage_subfolders, gamma_correct, change_contrast
+from .functions import manage_subfolders, gamma_correct, change_contrast
 # set logging to terminal
 log.getLogger().setLevel(log.INFO)
 logger = log.getLogger(os.path.split(__file__)[-1])

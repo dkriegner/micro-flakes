@@ -4,9 +4,11 @@ from PyQt6.QtCore import Qt, QObject, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QIcon, QTextCursor
 import sys
 import os
-from find_objects import ImageCrawler
-from functions import take_webcam_image
 import logging as log
+
+from .find_objects import ImageCrawler
+from .functions import take_webcam_image
+
 
 class EmittingStream(QObject):
     """
@@ -20,6 +22,7 @@ class EmittingStream(QObject):
 
     def flush(self):
         pass
+
 
 class MyApp(QWidget):
     """Create a windows widget with user's input dialog."""
@@ -193,7 +196,7 @@ class MyApp(QWidget):
             self.logbox.appendPlainText("There is no output. Click to start!")
 
 
-if __name__ == "__main__":
+def main():
     handlers = []
     log_stream = EmittingStream()
     handlers.append(log.StreamHandler(stream=log_stream))
