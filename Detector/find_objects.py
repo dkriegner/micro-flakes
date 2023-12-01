@@ -8,7 +8,7 @@ import shutil
 import os
 import logging as log
 from threading import Thread
-from .functions import manage_subfolders, gamma_correct, change_contrast
+from functions import manage_subfolders, gamma_correct, change_contrast
 # set logging to terminal
 log.getLogger().setLevel(log.INFO)
 logger = log.getLogger(os.path.split(__file__)[-1])
@@ -36,9 +36,6 @@ class ImageCrawler(list):
         self.workbook = 0  # Excel table for a new catalogue
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
         self.input_app = input_app
-
-        print("test print")
-        logger.info("test log")
 
         logger.info("The first iteration:")
         manage_subfolders(path)
