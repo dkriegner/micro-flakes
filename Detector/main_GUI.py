@@ -197,8 +197,7 @@ if __name__ == "__main__":
     handlers = []
     log_stream = EmittingStream()
     handlers.append(log.StreamHandler(stream=log_stream))
-    log.basicConfig(level=log.INFO, handlers=handlers)
-    log.basicConfig(format='%(message)s')
+    log.basicConfig(level=log.INFO, handlers=handlers, format='%(message)s')
     logger = log.getLogger(os.path.split(__file__)[-1])
 
     if os.name == 'nt':
