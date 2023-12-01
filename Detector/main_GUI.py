@@ -130,6 +130,7 @@ class MyApp(QWidget):
         """
         if text.strip("\n") != "":
             self.logbox.appendPlainText(text.strip("\n"))
+            self.logbox.repaint()
             try:
                 self.logbox.moveCursor(QTextCursor.MoveOperation.End)
             except Exception:  # upon cleanup after exception this can fail
