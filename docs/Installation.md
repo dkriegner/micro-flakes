@@ -1,6 +1,6 @@
-## Instalation
+## Instalation (Operation-system-independent)
 
-### Automatic (Operation-system-independent)
+### Automatic
 This software can be installed by flit. Follow these steps:
 1. Download this repository as a ZIP file.
 2. Extract the ZIP to a final path.
@@ -14,7 +14,7 @@ pip install -e .
 > For more information visit this webpage: https://flit.pypa.io/en/stable/.
 
 
-### Manual (Operation-system-independent)
+### Manual
 To run this software, Python 3 and the following libraries are required:
 - PIL
 - openpyxl
