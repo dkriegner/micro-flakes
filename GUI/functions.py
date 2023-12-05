@@ -5,6 +5,10 @@ import os
 import shutil
 from PIL import Image
 
+# set logging to terminal
+log.getLogger().setLevel(log.INFO)
+logger = log.getLogger(os.path.split(__file__)[-1])
+
 
 def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
     """
@@ -30,10 +34,8 @@ def change_contrast(img: Image.Image, level: float) -> Image.Image:
     The formula of function is?: new_RGB = 128 + (259 * (contrast + 255)) / (255 * (259 - contrast)) * (RGB - 128).
     """
     factor = (259 * (level + 255)) / (255 * (259 - level))
-
     def contrast(c):
         return 128 + factor * (c - 128)
-
     return img.point(contrast)
 
 
@@ -53,7 +55,7 @@ def take_webcam_image(path: str, filename: str):
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 3648)
     # Check if the webcam is opened correctly
     if not cap.isOpened():
-        raise log.error("Cannot open webcam")
+        raise logger.error("Cannot open webcam")
     while True:
         ret, frame = cap.read()
         # cv2.normalize(frame, frame, 100, 255, cv2.NORM_MINMAX)
@@ -75,7 +77,7 @@ def float_question(question: str, default: float | None = None) -> float:
     try:
         return float(reply)
     except (ValueError, TypeError):
-        log.warning("invalid input! try again")  # optional print message
+        logger.warning("invalid input! try again")  # optional print message
         return float_question(question, default)
 
 
@@ -88,11 +90,11 @@ def RGB_question(question: int, default: int | None = None) -> int:
         if 0 <= test <= 255:
             return int(reply)
         else:
-            log.warning("invalid input! write integer between 0 and 255")  # optional print message
-            return RGB_question(question, default)
+            logger.warning("invalid input! write integer between 0 and 255")  # optional print message
+            return float_question(question, default)
     except (ValueError, TypeError):
-        log.warning("invalid input! try again")  # optional print message
-        return RGB_question(question, default)
+        logger.warning("invalid input! try again")  # optional print message
+        return float_question(question, default)
 
 
 def yes_no_question(question: str, default: bool = True) -> bool:
@@ -105,12 +107,12 @@ def yes_no_question(question: str, default: bool = True) -> bool:
     if reply[0] == 'n':
         return False
     else:
-        log.warning("invalid input! try again")  # optional print message
+        logger.warning("invalid input! try again")  # optional print message
         return yes_no_question(question, default)
 
 
 def manage_subfolders(path: str):
-    """Create the output and input sub-folder or clean the output sub-folder"""
+    """Create the output and input subfolder or clean the output subfolder"""
     path1 = path
     path2 = "output/objects"
     if not os.path.exists(os.path.join(path1, "output")):
@@ -119,14 +121,13 @@ def manage_subfolders(path: str):
         shutil.rmtree(os.path.join(path1, path2))
     os.makedirs(os.path.join(path1, path2))
 
-
 def read_cache() -> str:
-    """Open existing a cache file or make a new cache file."""
+    """Open existing a cache file or reate a new chache file."""
     try:
         cache = open(r"CACHE", "r")
     except:
         cache = open(r"CACHE", "w+")
     path = cache.read()
     cache.close()
-
     return path
+

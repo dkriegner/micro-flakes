@@ -23,34 +23,34 @@ def dialog() -> (str, str, bool, float, int):
         cache.close()
         print(f"Working path has set to {path}.")
 
-    manage_subfolders(path)  # Clear old output files or make new folder (input and output)
+    manage_subfolders(path)  # Clear old output files or make new folder (output)
 
     print("You can upload existing photo or take a new photo by webcam.")
     settings = yes_no_question("Do you upload existing photo?", True)
 
     if settings == 0:
         # Take a new photo by USB webcam.
-        name = input("Write name of the new photo: ")
+        name = input("Write name of the new photo (without extension): ")
         take_webcam_image(path, name)
         name += ".jpg"
     else:
         # Open existing photo in the working directory.
         print("Files in input:")
-        print(os.listdir(f"{path}/input/"))
+        print(os.listdir(f"{path}/"))
         print("Write name of photo from microscope.")
-        name = input("input/")
-        while not os.path.exists(f"{path}/input/{name}") or name == "":  # check if the file exists
+        name = input(".../")
+        while not os.path.exists(f"{path}/{name}") or name == "":  # check if the file exists
             log.warning("Error! The file doesn't exist.")
             name = input("input/")  # ask for a new input
 
-    # Make ouput file after 1st iteration: marked pixel, found flakes and selected flakes with the centre of gravity.
+    # Make output file after 1st iteration: marked pixel, found flakes and selected flakes with the centre of gravity.
     more_output = yes_no_question('Do you want to get image output after 1st iteration?', False)
 
     # Parameter to remove trash and noise
     min_size = float_question("Write minimal area of edge of object in um^2. Smaller object will be deleted", 42.4)
     min_size /= 1.6952  # convert size from micro meters to pixels
 
-    # Parameter to mark pixel with a potentional object.
+    # Parameter to mark pixel with a potential object.
     sensitivity = RGB_question("Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input.", 40)
 
     return path, name, more_output, min_size, sensitivity
@@ -90,6 +90,7 @@ def line_command() -> (str, str, bool, float, int):
 def main():
     # Show info messages
     log.getLogger().setLevel(log.INFO)
+    log.basicConfig(format='%(message)s')
 
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)

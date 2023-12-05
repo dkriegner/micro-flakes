@@ -6,8 +6,8 @@ import sys
 import os
 import logging as log
 
-from .find_objects import ImageCrawler
-from .functions import take_webcam_image
+from find_objects import ImageCrawler
+from functions import take_webcam_image
 
 
 class EmittingStream(QObject):
@@ -223,3 +223,5 @@ def main():
     app = QApplication(sys.argv)
     ex = MyApp(log_stream)
     sys.exit(app.exec())
+
+main()

@@ -8,18 +8,21 @@ import shutil
 import os
 import logging as log
 from threading import Thread
-from .functions import manage_subfolders, gamma_correct, change_contrast
+from functions import manage_subfolders, gamma_correct, change_contrast
+# set logging to terminal
+log.getLogger().setLevel(log.INFO)
+logger = log.getLogger(os.path.split(__file__)[-1])
 
 
 class ImageCrawler(list):
     """
-    It loads the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of the detected
-    object with centres and area of detected edges in low resolution (self.output). It identifies objects on
-    an artificially lower-resolution image and stores them as a list of detected flakes (self.marked_objects).
-    Every flake is a list of coordinates [x, y] of squares 7×7 pixels. Every square contains the same pixel.
-    It is a method how to decrease resolution. Too small objects are removed (objects which contain less squares than
-    self.min_size). Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding
-    flakes from the 1st iteration in high resolution.
+    It loads the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of the detected object
+    with centres and area of detected edges in low resolution (self.output). It identifies objects on an artificially
+    lower-resolution image and stores them as a list of detected flakes (self.marked_objects). Every flake is a list of coordinates [x, y] of
+    squares 7×7 pixels. Every square contains the same pixel. It is a method how to decrease resolution. Too small
+    objects are removed (objects which contain less squares than self.min_size).
+    Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding flakes
+    from the 1st iteration in high resolution.
     """
     def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float,
                  input_app=0):
@@ -29,12 +32,12 @@ class ImageCrawler(list):
         self.min_size = min_size  # Look at main.py
         self.sensitivity = sensitivity  # Look at main.py
         self.calibration = calibration  # Look at main.py
-        self.detected_object = []  # List of detected flakes. Every flake is a list of coordinates [x, y]
+        self.detected_object = [] # List of detected flakes. Every flake is a list of coordinates [x, y]
         self.workbook = 0  # Excel table for a new catalogue
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
         self.input_app = input_app
 
-        log.info("The first iteration:")
+        logger.info("The first iteration:")
         manage_subfolders(path)
         # Load an image
         self.orig_photo, self.output = self._load_image()
@@ -47,16 +50,16 @@ class ImageCrawler(list):
         if self.out1 == 1:
             self._output_marked_objects()
 
-        log.info("The second iteration:")
+        logger.info("The second iteration:")
         # Now, find objects from the first iteration in the same area in high resolution
         # Set area for finding object in high resolution
-        log.info(f"processing of {len(self.marked_objects)} objects:")
+        logger.info(f"processing of {len(self.marked_objects)} objects:")
 
         for index, q in enumerate(self.marked_objects):
             # identify corners of objects
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
-            # if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
+            #if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
             # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes from the 1st iteraction in high resolution.
             self.append(Flake(self, index, (x_min, x_max, y_min, y_max))) # One parallel process (old)
 
@@ -82,12 +85,19 @@ class ImageCrawler(list):
         if not self.out1 == 1:
             self._clean()  # Clean images of flakes in output folder.
 
+
     def _load_image(self) -> (Image.Image, Image.Image):
         """Loads the image from the disk into a PIL Image object. """
         '''It finds and marks all object in the photo.'''
-        orig_photo = Image.open(f"{self.path}/{self.name}")  # open the original photo
-        log.info("The photo has been opened.")
-        # log.info("changing gamma and contrast of the original photo") # deactivated
+        if self.input_app == 0:
+            orig_photo = Image.open(f"{self.path}/input/{self.name}")  # open the original photo
+            logger.info("The photo has been opened.")
+            #logger.info("changing gamma and contrast of the original photo")
+        elif self.input_app == 2:
+            orig_photo = Image.open(f"{self.path}/{self.name}")  # open the original photo
+            #starter.logbox.appendPlainText("The photo has been opened.") # it doesn't work
+            logger.info("The photo has been opened.")
+            #logger.info("changing gamma and contrast of the original photo") # deactivated
         # orig_photo = gamma_correct(orig_photo, 1.5)
         # orig_photo = change_contrast(orig_photo, 100)
 
@@ -108,14 +118,14 @@ class ImageCrawler(list):
         marked_pixel = []  # A list of (x, y) coordinates of marked squares of 7 by 7 pixels.
         marked_objects = []  # A list of detected object which is represented by a list of (x, y) coordinates
 
-        log.info("marking non-black area")
+        logger.info("marking non-black area")
         for i in range(self.orig_photo.size[0] - 1):
             for j in range(self.orig_photo.size[1] - 1):
                 R, G, B = self.pro[i, j]
                 if R > self.sensitivity or G > self.sensitivity or B > self.sensitivity:
                     self.pro[i, j] = (255, 0, 0)
 
-        log.info("finding object area")
+        logger.info("finding object area")
         for i in range(3, self.orig_photo.size[0] - 4, 6):
             for j in range(3, self.orig_photo.size[1] - 4, 6):
                 red = 0  # number of red pixels
@@ -128,11 +138,11 @@ class ImageCrawler(list):
                 if px != 0:
                     if red / float(px) > 0.6:
                         for k in range(i - 3, i + 3):
-                            for m in range(j - 3, j + 3):
-                                self.new[k, m] = (255, 0, 0)
+                            for l in range(j - 3, j + 3):
+                                self.new[k, l] = (255, 0, 0)
                         marked_pixel.append((i, j))
 
-        log.info("finding whole objects")
+        logger.info("finding whole objects")
 
         marked_pixel = np.array(marked_pixel)
 
@@ -158,7 +168,7 @@ class ImageCrawler(list):
 
             marked_objects.append(queue)
 
-        log.info("deleting too small object")
+        logger.info("deleting too small object")
         for obj in marked_objects.copy():
             if len(obj) <= self.min_size:
                 marked_objects.remove(obj)
@@ -174,8 +184,8 @@ class ImageCrawler(list):
         for n in self.marked_objects:
             for (i, j) in n:
                 for k in range(i - 3, i + 3):
-                    for m in range(j - 3, j + 3):
-                        test[k, m] = (256, 0, 0)
+                    for l in range(j - 3, j + 3):
+                        test[k, l] = (256, 0, 0)
 
         centre = []
         for q in self.marked_objects:
@@ -186,8 +196,8 @@ class ImageCrawler(list):
         for (i, j) in centre:
             ImageDraw.Draw(ts).text((i + 5, j + 5), str(len(self.marked_objects[p])), (0, 0, 0))
             for k in range(i - 5, i + 5):
-                for m in range(j - 5, j + 5):
-                    test[k, m] = (0, 0, 0)
+                for l in range(j - 5, j + 5):
+                    test[k, l] = (0, 0, 0)
             p += 1
 
         # Marked light pixel in original picture
@@ -217,12 +227,6 @@ class Flake:
     def __init__(self, parent: ImageCrawler, identifier: int, coordinates: (int, int, int, int)):
         """Process flake in high resolution."""
         # calibration for converting to the real size
-        self.marked_object2 = None
-        self.test = None
-        self.new = None
-        self.org = None
-        self.output2 = None
-        self.output = None
         self.calib = parent.calibration
         # define all needed properties of a flake
         self.id = identifier  # identification number
@@ -239,7 +243,7 @@ class Flake:
         self.parent = parent
 
     def start(self):
-        log.info(f"{round(100*(self.id + 1)/len(self.parent.marked_objects), 1)} %")
+        logger.info(f"{round(100*(self.id + 1)/len(self.parent.marked_objects), 1)} %")
         self.output, self.output2 = self._load_image2()
         self.org = self.parent.orig_photo.load()
         self.new = self.output.load()
@@ -276,8 +280,8 @@ class Flake:
                 red = 0
                 px = 0
                 for k in range(i - 1, i + 1):
-                    for m in range(j - 1, j + 1):
-                        if self.org[k, m] == (255, 0, 0):
+                    for l in range(j - 1, j + 1):
+                        if self.org[k, l] == (255, 0, 0):
                             red += 1
                         px += 1
                 if px != 0:
@@ -288,7 +292,7 @@ class Flake:
 
         marked_object = []
 
-        # Connect neighbouring pixels to object
+        # Connect neighbouring pixel to object
         i = 0
         while len(marked_pixel) > 0:
             seed = marked_pixel[0]
@@ -412,15 +416,15 @@ class Flake:
 
     @property
     def sizeX(self) -> float:
-        return self.width * self.calib
+        return  self.width * self.calib
 
     @property
     def sizeY(self) -> float:
-        return self.height * self.calib
+        return  self.height * self.calib
 
     @property
     def transparency(self) -> float:
-        return 1 - self.size2 / self.full_size2
+        return  1 - self.size2 / self.full_size2
 
     @property
     def bright(self) -> float:
@@ -428,14 +432,18 @@ class Flake:
 
     @property
     def object_height(self) -> float:
-        return 20 * self.bright2 / self.size2 - 6940
+        return  20 * self.bright2 / self.size2 - 6940
 
     @property
     def ratio(self) -> float:
-        return max(((-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5) / 4) / (
-                4 * self.full_size2 / (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)),
-                (4 * self.full_size2 / (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)) / (
-                (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5) / 4))
+        return max(((-self.size2 - (self.size2 ** 2
+                           - 16 * self.full_size2) ** 0.5) / 4) / (
+                4 * self.full_size2 /
+                (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)),
+        (4 * self.full_size2 / (-self.size2
+                                  - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)) / (
+                (-self.size2 - (self.size2 ** 2
+                                  - 16 * self.full_size2) ** 0.5) / 4))
 
     @property
     def contourI(self) -> int:
@@ -467,9 +475,9 @@ class ExcelOutput:
     def __init__(self, image: ImageCrawler):
         self.workbook = Workbook()  # Create a new table
         self.image = image
-        self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx"  # Set the name of the table
-        self.image_name = f"{image.path}/output/objects/{image.name}_object"  # The beginnig of names of images adding to the table
-        # Create a header of the table with configuration of measuring and explanatory notes
+        self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx" # Set the name of the table
+        self.image_name = f"{image.path}/output/objects/{image.name}_object" # The beginnig of names of images adding to the table
+        # Create a header of the table with congiguration of measuring and explanatory notes
         self._generate_metadata_header()
         # Add all stored flakes in self.detected_object in ImageCrawler
         self._generate_object_table()
@@ -552,7 +560,7 @@ class ExcelOutput:
         return None
 
     def _save_to_disk(self):
-        """Store the Excel sheet on the filesystem"""
+        """Store the excel sheet on the filesystem"""
         self.workbook.save(self.filename)  # save Excel table
 
         return None
