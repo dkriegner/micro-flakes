@@ -4,6 +4,7 @@ import cv2
 import os
 import shutil
 from PIL import Image
+import time
 
 # set logging to terminal
 log.getLogger().setLevel(log.INFO)
@@ -46,13 +47,14 @@ def take_webcam_image(path: str, filename: str):
     # cap.set(14, 500) # gain
     # Turn off auto exposure
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
-    # set exposure time
-    cap.set(cv2.CAP_PROP_EXPOSURE, 0)
-    # Set the ISO sensitivity to the maximum value
-    # cap.set(cv2.CAP_PROP_ISO_SPEED, 10000)
+    time.sleep(2)
     # set resolution
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 5472)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 3648)
+    # set exposure time
+    cap.set(cv2.CAP_PROP_EXPOSURE, 0)
+    # Set the ISO sensitivity to the maximum value
+    #cap.set(cv2.CAP_PROP_ISO_SPEED, 10000)
     # Check if the webcam is opened correctly
     if not cap.isOpened():
         raise logger.error("Cannot open webcam")

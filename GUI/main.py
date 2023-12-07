@@ -121,7 +121,6 @@ class MyApp(QWidget):
         self.setGeometry(300, 300, 300, 200)
         self.show()
 
-
     @pyqtSlot(str)
     def output_written(self, text):
         """
@@ -150,7 +149,7 @@ class MyApp(QWidget):
         """Action of Take a photo button."""
         self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "", "All Files (*)")
         if self.fileName:
-            self.logbox.appendPlainText("Opening a webcam.\nPress Esc to take a new photo.")
+            self.logbox.appendPlainText("Opening a webcam.\nPress Enter to take a new photo.")
             self.logbox.repaint()
             path, name = os.path.split(self.fileName)
             take_webcam_image(path, name)
@@ -216,8 +215,6 @@ def main():
             windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         except ImportError:
             pass
-
-
 
     # Create window widget
     app = QApplication(sys.argv)

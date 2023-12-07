@@ -205,6 +205,7 @@ class ImageCrawler(list):
         shutil.rmtree(os.path.join(self.path, "output", "objects"))
         return None
 
+
 class Flake:
     """
     Represents and processes an identified object on an image. At first, self._load_image2 load the original image
