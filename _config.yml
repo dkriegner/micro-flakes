@@ -4,6 +4,6 @@ relative_links:
   enabled: true
   collections: true
 include:
-  - docs/Welcome.md
+  - README.md
   - docs/Installation.md
   - docs/Manual.md
