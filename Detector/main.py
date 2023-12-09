@@ -16,7 +16,7 @@ def dialog() -> (str, str, bool, float, int):
     print(f"Working path: {path}")
     out2 = yes_no_question("Do you change the path?", False)
     if out2 == 1:
-        # clear cache a write a new path
+        # clear cache and write a new path
         path = input("New path: ")
         cache = open(r"CACHE", "w")
         cache.write(path)

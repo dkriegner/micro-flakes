@@ -7,7 +7,7 @@ import os
 import logging as log
 
 from find_objects import ImageCrawler
-from functions import take_webcam_image
+from functions import take_webcam_image, read_cache
 
 
 class EmittingStream(QObject):
@@ -28,6 +28,7 @@ class MyApp(QWidget):
     """Create a windows widget with user's input dialog."""
 
     def __init__(self, log_stream):
+        self.fileName = None
         self.log_stream = log_stream
         super().__init__()
 
@@ -90,10 +91,18 @@ class MyApp(QWidget):
         self.spinbox2.setToolTip("Ever pixel having RGB value bigger this value will be marked.")
         hbox3.addWidget(self.spinbox2)
 
-        self.button2 = QPushButton('Start')
-        self.button2.clicked.connect(self.on_click)
-        self.button2.setToolTip("Find flakes.")
-        vbox.addWidget(self.button2)
+        hbox5 = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox5)
+
+        self.save = QPushButton('Start')
+        self.save.clicked.connect(self.on_click)
+        self.save.setToolTip("Find flakes.")
+        hbox5.addWidget(self.save)
+
+        self.config = QPushButton('Configurations')
+        self.config.clicked.connect(self.on_click3)
+        self.config.setToolTip("Calibrations")
+        hbox5.addWidget(self.config)
 
         self.logbox = QPlainTextEdit()
         self.logbox.setReadOnly(True)
@@ -108,7 +117,8 @@ class MyApp(QWidget):
         hbox2 = QHBoxLayout()  # Create a horizontal box layout for the buttons
         vbox.addLayout(hbox2)
 
-        self.weblink = QLabel('<a href="https://github.com/dkriegner/micro-flakes/tree/main/Detector">Project webpage</a>')
+        self.weblink = QLabel(
+            '<a href="https://github.com/dkriegner/micro-flakes/tree/main/Detector">Project webpage</a>')
         self.weblink.setOpenExternalLinks(True)
         hbox2.addWidget(self.weblink)
 
@@ -135,11 +145,17 @@ class MyApp(QWidget):
             except Exception:  # upon cleanup after exception this can fail
                 pass
 
-
     def open_file_dialog(self):
         """Action of Choose File button."""
-        self.fileName, _ = QFileDialog.getOpenFileName(self, "QFileDialog.getOpenFileName()", "",
-                                                  "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
+        # Load last working directory
+        path = read_cache()
+        if os.path.exists(path):
+            self.fileName, _ = QFileDialog.getOpenFileName(self, "Open an input File", path,
+                                                         "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
+        else:
+            log.warning("The default path does not exist!")
+            self.fileName, _ = QFileDialog.getOpenFileName(self, "Open an input File", "",
+                                                         "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
         if self.fileName:
             self.logbox.appendPlainText(f'Selected input file: {self.fileName}')
         else:
@@ -147,13 +163,13 @@ class MyApp(QWidget):
 
     def save_file_dialog(self):
         """Action of Take a photo button."""
-        self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "", "All Files (*)")
+        self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
+                                                       "*.jpg;;*.png;;*.bmp;;*.gif")
         if self.fileName:
             self.logbox.appendPlainText("Opening a webcam.\nPress Enter to take a new photo.")
             self.logbox.repaint()
             path, name = os.path.split(self.fileName)
             take_webcam_image(path, name)
-            self.fileName += ".jpg"
             self.logbox.appendPlainText(f'The photo is saved to: {self.fileName}')
         else:
             self.logbox.appendPlainText('No file saved.')
@@ -173,19 +189,20 @@ class MyApp(QWidget):
 
         more_output = self.checkbox1.isChecked()
 
-        min_size = float(self.spinbox.value())/1.6952
+        min_size = float(self.spinbox.value()) / 1.6952
 
         sensitivity = int(self.spinbox2.value())
 
         self.logbox.appendPlainText(f'Finding flakes with user\'s parameters:\n'
-                                    f'Path: {path}\nName: {name}\nMin. size: {min_size*1.6952}\nSensitivity: {sensitivity}')
+                                    f'Path: {path}\nName: {name}\nMin. size: {min_size * 1.6952}\nSensitivity: {sensitivity}')
         self.logbox.repaint()
-        log.debug(f'User entered: {name}, {path}, {more_output}, {min_size*1.6952}, {sensitivity}')
+        log.debug(f'User entered: {name}, {path}, {more_output}, {min_size * 1.6952}, {sensitivity}')
 
         # Load an image, find all flakes and make a catalogue them.
         figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration, 2)
-        self.logbox.appendPlainText(f"The task has been finished. {len(figure1.marked_objects)} objects have been processed.\n"
-                                    f"The catalogue is saved to: {path}/output/Catalogue_{name}.xlsx")
+        self.logbox.appendPlainText(
+            f"The task has been finished. {len(figure1.marked_objects)} objects have been processed.\n"
+            f"The catalogue is saved to: {path}/output/Catalogue_{name}.xlsx")
         self.output = f"{path}/output/Catalogue_{name}.xlsx"
 
     def on_click2(self):
@@ -197,6 +214,87 @@ class MyApp(QWidget):
                 os.system(f"xdg-open {self.output}")
         except:
             self.logbox.appendPlainText("There is no output. Click to start!")
+
+    def on_click3(self):
+        # Create a new widget instance
+        self.new_widget = Configurations()
+        # Show the new widget
+        self.new_widget.show()
+
+
+class Configurations(QWidget):
+    """Create a windows widget with user's input dialog."""
+
+    def __init__(self):
+        self.folder_name = None
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        """The content of the window widget."""
+        vbox = QVBoxLayout()
+        self.setLayout(vbox)
+
+        hbox = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox)
+
+        self.button = QPushButton('Choose default path')
+        self.button.clicked.connect(self.chooseFolderDialog)
+        self.button.setToolTip('Open existing photo with Flakes in a microscope in the black field mode')
+        hbox.addWidget(self.button)
+
+        hbox4 = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox4)
+
+        self.label3 = QLabel('Size scale in um/px')
+        hbox4.addWidget(self.label3)
+
+        self.spinbox = QDoubleSpinBox()
+        try:
+            default_ratio = read_cache()[1]
+            self.spinbox.setValue(float(default_ratio))  # Set the default value
+        except:
+            self.spinbox.setValue(0.187)  # Set the default value
+        self.spinbox.setRange(0, 10)
+        # Set the width of the spinbox to 100 pixels
+        self.spinbox.setFixedWidth(100)
+        self.spinbox.setToolTip("Smaller flakes will be removed as noice.")
+        hbox4.addWidget(self.spinbox)
+
+        hbox5 = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox5)
+
+        self.save = QPushButton('Save')
+        self.save.clicked.connect(self.on_click)
+        self.save.setToolTip("Find flakes.")
+        hbox5.addWidget(self.save)
+
+        self.discard = QPushButton('Discard')
+        self.discard.clicked.connect(self.on_click2)
+        self.discard.setToolTip("Calibrations")
+        hbox5.addWidget(self.discard)
+
+        self.setWindowTitle('Configurations')
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), 'ICON.ico')))  # Set the window icon
+        self.setGeometry(300, 300, 300, 200)
+        self.show()
+
+    def chooseFolderDialog(self):
+        # Set the default directory to the user's home directory
+        default_dir = read_cache()[0]
+        # Invoke the QFileDialog.getExistingDirectory function with the default directory
+        self.folder_name = QFileDialog.getExistingDirectory(self, "Choose Folder", default_dir)
+
+    def on_click(self):
+        # Open the file in write mode, which will overwrite the existing content
+        with open("CACHE", 'w') as file:
+            # Loop through each element in the list
+            for element in [str(self.folder_name), str(self.spinbox.value())]:
+                # Write the element to the file, followed by a newline character
+                file.write(element + '\n')
+
+    def on_click2(self):
+        pass
 
 
 def main():
@@ -220,5 +318,6 @@ def main():
     app = QApplication(sys.argv)
     ex = MyApp(log_stream)
     sys.exit(app.exec())
+
 
 main()

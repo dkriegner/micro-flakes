@@ -61,7 +61,7 @@ def take_webcam_image(path: str, filename: str):
         cv2.imshow('Webcam input', frame)
         c = cv2.waitKey(30)
         if c == 13:
-            cv2.imwrite(filename=f'{path}/{filename}.jpg', img=frame)
+            cv2.imwrite(filename=f'{path}/{filename}', img=frame)
             break
     cap.release()
     cv2.destroyAllWindows()

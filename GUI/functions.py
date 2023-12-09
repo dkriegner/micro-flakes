@@ -123,13 +123,23 @@ def manage_subfolders(path: str):
         shutil.rmtree(os.path.join(path1, path2))
     os.makedirs(os.path.join(path1, path2))
 
-def read_cache() -> str:
-    """Open existing a cache file or reate a new chache file."""
-    try:
-        cache = open(r"CACHE", "r")
-    except:
-        cache = open(r"CACHE", "w+")
-    path = cache.read()
-    cache.close()
-    return path
+
+def read_cache() -> list:
+    """Open existing a cache file or create a new cache file."""
+    if os.path.isfile("CACHE"):
+        # Create an empty list to store the lines
+        lines = []
+        # Open the file in read mode
+        with open("CACHE", 'r') as file:
+            # Loop through each line in the file
+            for line in file:
+                # Strip the newline character and append the line to the list
+                lines.append(line.strip())
+        # Return the list of lines
+        file.close()
+        return lines
+    else:
+        file = open(r"CACHE", "w+")
+        file.close()
+        return ["", ""]
 
