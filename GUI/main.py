@@ -28,9 +28,18 @@ class MyApp(QWidget):
     """Create a windows widget with user's input dialog."""
 
     def __init__(self, log_stream):
+        self.output = None
         self.fileName = None
         self.log_stream = log_stream
         super().__init__()
+        try:
+            # default directory for explorer dialogs
+            self.default_dir = read_cache()[0]
+            # calibration factor to get real size of sample (converting from px to um)
+            self.calibration = float(read_cache()[1])
+        except:
+            self.default_dir = None
+            self.calibration = 0.187
 
         self.initUI()
 
@@ -122,7 +131,7 @@ class MyApp(QWidget):
         self.weblink.setOpenExternalLinks(True)
         hbox2.addWidget(self.weblink)
 
-        self.label5 = QLabel('Version 0.0.6')
+        self.label5 = QLabel('Version 0.1.1')
         self.label5.setAlignment(Qt.AlignmentFlag.AlignRight)
         hbox2.addWidget(self.label5)
 
@@ -148,14 +157,13 @@ class MyApp(QWidget):
     def open_file_dialog(self):
         """Action of Choose File button."""
         # Load last working directory
-        path = read_cache()
-        if os.path.exists(path):
-            self.fileName, _ = QFileDialog.getOpenFileName(self, "Open an input File", path,
-                                                         "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
+        if os.path.exists(self.default_dir):
+            self.fileName, _ = QFileDialog.getOpenFileName(self, "Open an input File", self.default_dir,
+                                                           "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
         else:
             log.warning("The default path does not exist!")
             self.fileName, _ = QFileDialog.getOpenFileName(self, "Open an input File", "",
-                                                         "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
+                                                           "Images (*.png *.xpm *.jpg *.bmp *.gif);;All Files (*)")
         if self.fileName:
             self.logbox.appendPlainText(f'Selected input file: {self.fileName}')
         else:
@@ -163,8 +171,12 @@ class MyApp(QWidget):
 
     def save_file_dialog(self):
         """Action of Take a photo button."""
-        self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
-                                                       "*.jpg;;*.png;;*.bmp;;*.gif")
+        if os.path.exists(self.default_dir):
+            self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", self.default_dir,
+                                                           "*.jpg;;*.png;;*.bmp;;*.gif")
+        else:
+            self.fileName, _ = QFileDialog.getSaveFileName(self, "QFileDialog.getSaveFileName()", "",
+                                                           "*.jpg;;*.png;;*.bmp;;*.gif")
         if self.fileName:
             self.logbox.appendPlainText("Opening a webcam.\nPress Enter to take a new photo.")
             self.logbox.repaint()
@@ -176,10 +188,7 @@ class MyApp(QWidget):
 
     def on_click(self):
         """Action of Start button."""
-        # Fixed setting parameters
-        calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
-
-        # Get user input from the  windows widget.
+        # Get user input from the widget.
         try:
             str(self.fileName)
         except:
@@ -199,7 +208,7 @@ class MyApp(QWidget):
         log.debug(f'User entered: {name}, {path}, {more_output}, {min_size * 1.6952}, {sensitivity}')
 
         # Load an image, find all flakes and make a catalogue them.
-        figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration, 2)
+        figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, self.calibration)
         self.logbox.appendPlainText(
             f"The task has been finished. {len(figure1.marked_objects)} objects have been processed.\n"
             f"The catalogue is saved to: {path}/output/Catalogue_{name}.xlsx")
@@ -217,62 +226,67 @@ class MyApp(QWidget):
 
     def on_click3(self):
         # Create a new widget instance
-        self.new_widget = Configurations()
+        self.new_widget = Configurations(self)
         # Show the new widget
         self.new_widget.show()
 
 
 class Configurations(QWidget):
-    """Create a windows widget with user's input dialog."""
+    """Create a windows widget with user's configurations."""
 
-    def __init__(self):
+    def __init__(self, parent: MyApp):
         self.folder_name = None
+        self.parent = parent
+        try:
+            # Set the default directory to the user's home directory
+            self.default_dir = read_cache()[0]
+        except:
+            self.default_dir = None
         super().__init__()
         self.initUI()
 
     def initUI(self):
-        """The content of the window widget."""
+        """The content of the configuration widget."""
         vbox = QVBoxLayout()
         self.setLayout(vbox)
+
+        self.button = QPushButton('Choose default path')
+        self.button.clicked.connect(self.chooseFolderDialog)
+        self.button.setToolTip('Set existing directory')
+        vbox.addWidget(self.button)
 
         hbox = QHBoxLayout()  # Create a horizontal box layout for the buttons
         vbox.addLayout(hbox)
 
-        self.button = QPushButton('Choose default path')
-        self.button.clicked.connect(self.chooseFolderDialog)
-        self.button.setToolTip('Open existing photo with Flakes in a microscope in the black field mode')
-        hbox.addWidget(self.button)
-
-        hbox4 = QHBoxLayout()  # Create a horizontal box layout for the buttons
-        vbox.addLayout(hbox4)
-
         self.label3 = QLabel('Size scale in um/px')
-        hbox4.addWidget(self.label3)
+        hbox.addWidget(self.label3)
 
         self.spinbox = QDoubleSpinBox()
         try:
-            default_ratio = read_cache()[1]
-            self.spinbox.setValue(float(default_ratio))  # Set the default value
+            default_ratio = float(read_cache()[1])
+            self.spinbox.setValue(default_ratio)  # Set the default value
         except:
             self.spinbox.setValue(0.187)  # Set the default value
         self.spinbox.setRange(0, 10)
         # Set the width of the spinbox to 100 pixels
         self.spinbox.setFixedWidth(100)
-        self.spinbox.setToolTip("Smaller flakes will be removed as noice.")
-        hbox4.addWidget(self.spinbox)
+        self.spinbox.setDecimals(4)
+        self.spinbox.setSingleStep(0.001)
+        self.spinbox.setToolTip("Set scale to calculate of size and area of objects")
+        hbox.addWidget(self.spinbox)
 
-        hbox5 = QHBoxLayout()  # Create a horizontal box layout for the buttons
-        vbox.addLayout(hbox5)
+        hbox2 = QHBoxLayout()  # Create a horizontal box layout for the buttons
+        vbox.addLayout(hbox2)
 
-        self.save = QPushButton('Save')
+        self.save = QPushButton('Apply')
         self.save.clicked.connect(self.on_click)
-        self.save.setToolTip("Find flakes.")
-        hbox5.addWidget(self.save)
+        self.save.setToolTip("Save configurations to CACHE")
+        hbox2.addWidget(self.save)
 
-        self.discard = QPushButton('Discard')
+        self.discard = QPushButton('Cancel')
         self.discard.clicked.connect(self.on_click2)
-        self.discard.setToolTip("Calibrations")
-        hbox5.addWidget(self.discard)
+        self.discard.setToolTip("Discard new configurations")
+        hbox2.addWidget(self.discard)
 
         self.setWindowTitle('Configurations')
         self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), 'ICON.ico')))  # Set the window icon
@@ -280,21 +294,33 @@ class Configurations(QWidget):
         self.show()
 
     def chooseFolderDialog(self):
-        # Set the default directory to the user's home directory
-        default_dir = read_cache()[0]
-        # Invoke the QFileDialog.getExistingDirectory function with the default directory
-        self.folder_name = QFileDialog.getExistingDirectory(self, "Choose Folder", default_dir)
+        if not (self.default_dir is None):
+            # Invoke the QFileDialog.getExistingDirectory function with the default directory
+            self.folder_name = QFileDialog.getExistingDirectory(self, "Choose Folder", self.default_dir)
+        else:
+            # Invoke the QFileDialog.getExistingDirectory function with the default directory
+            self.folder_name = QFileDialog.getExistingDirectory(self, "Choose Folder", "")
 
     def on_click(self):
         # Open the file in write mode, which will overwrite the existing content
+        if self.folder_name is None and self.default_dir is None:
+            toWrite = ["", str(self.spinbox.value())]
+        elif self.folder_name is None and not (self.default_dir is None):
+            toWrite = [self.default_dir, str(self.spinbox.value())]
+        else:
+            toWrite = [self.folder_name, str(self.spinbox.value())]
+
         with open("CACHE", 'w') as file:
             # Loop through each element in the list
-            for element in [str(self.folder_name), str(self.spinbox.value())]:
+            for element in toWrite:
                 # Write the element to the file, followed by a newline character
                 file.write(element + '\n')
+        self.parent.logbox.appendPlainText(f"Default directory: {toWrite[0]}\nDefault scale: {toWrite[0]} um/px")
+        self.close()
 
     def on_click2(self):
-        pass
+        self.parent.logbox.appendPlainText("The new configuration does not save.")
+        self.close()
 
 
 def main():
