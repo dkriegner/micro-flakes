@@ -1,3 +1,9 @@
+---
+title: The detector of micro flakes
+layout: page
+permalink: /micro-flakes/
+---
+
 # The detector of micro flakes
 
 ## About
