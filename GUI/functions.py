@@ -5,6 +5,7 @@ import os
 import shutil
 from PIL import Image
 import time
+import sys
 
 # set logging to terminal
 log.getLogger().setLevel(log.INFO)
@@ -126,11 +127,13 @@ def manage_subfolders(path: str):
 
 def read_cache() -> list:
     """Open existing a cache file or create a new cache file."""
-    if os.path.isfile("CACHE"):
+    exe_dir = os.path.dirname(sys.executable)
+
+    if os.path.isfile(os.path.join(exe_dir, "CACHE")):
         # Create an empty list to store the lines
         lines = []
         # Open the file in read mode
-        with open("CACHE", 'r') as file:
+        with open(os.path.join(exe_dir, "CACHE"), 'r') as file:
             # Loop through each line in the file
             for line in file:
                 # Strip the newline character and append the line to the list
@@ -139,7 +142,7 @@ def read_cache() -> list:
         file.close()
         return lines
     else:
-        file = open(r"CACHE", "w+")
+        file = open(os.path.join(exe_dir, "CACHE"), "w+")
         file.close()
         return ["", ""]
 

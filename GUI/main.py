@@ -310,7 +310,8 @@ class Configurations(QWidget):
         else:
             toWrite = [self.folder_name, str(self.spinbox.value())]
 
-        with open("CACHE", 'w') as file:
+        exe_dir = os.path.dirname(sys.executable)
+        with open(os.path.join(exe_dir, "CACHE"), 'w') as file:
             # Loop through each element in the list
             for element in toWrite:
                 # Write the element to the file, followed by a newline character
