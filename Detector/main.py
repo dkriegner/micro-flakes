@@ -1,6 +1,7 @@
 import os
-from .find_objects import ImageCrawler
-from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question
+from find_objects import ImageCrawler
+from functions import (take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question,
+                        cache_path)
 import argparse
 import logging as log
 
@@ -8,17 +9,19 @@ import logging as log
 def dialog() -> (str, str, bool, float, int):
     """Ask the user to input parameters"""
     print("Welcome in software to automatics detect object in microscope.")
-    print("Project webpage: https://github.com/dkriegner/micro-flakes/tree/main/Detector\nVersion: 0.0.6\n")
+    print("Project webpage: https://github.com/dkriegner/micro-flakes/tree/main/Detector\nVersion: 0.1.1\n")
 
+    # Find a cache file
+    cachepath = cache_path()
     # Load last working directory
-    path = read_cache()
+    path = read_cache(cachepath)
 
     print(f"Working path: {path}")
     out2 = yes_no_question("Do you change the path?", False)
     if out2 == 1:
         # clear cache and write a new path
         path = input("New path: ")
-        cache = open(r"CACHE", "w")
+        cache = open(cachepath, 'w')
         cache.write(path)
         cache.close()
         print(f"Working path has set to {path}.")
@@ -97,7 +100,7 @@ def main():
 
     path, name, more_output, min_size, sensitivity = line_command() # Try to read a line-command input.
 
-    if path == None:  # If there is no parameter from command line
+    if path is None:  # If there is no parameter from command line
         # Print a welcome screen and ask user's inputs. This function can make a new image by a USB webcam.
         path, name, more_output, min_size, sensitivity = dialog()
 
@@ -106,4 +109,4 @@ def main():
 
     input("\nThe task has been finished. Press some key for close a script.")
 
-#main()  # For debuging in a code editor. Remove before install.
+main()  # For debuging in a code editor. Remove before install.

@@ -2,6 +2,7 @@
 import logging as log
 import cv2
 import os
+import sys
 import shutil
 from PIL import Image
 
@@ -120,13 +121,29 @@ def manage_subfolders(path: str):
     os.makedirs(os.path.join(path1, path2))
 
 
-def read_cache() -> str:
+def read_cache(path: str) -> str:
     """Open existing a cache file or make a new cache file."""
-    try:
-        cache = open(r"CACHE", "r")
-    except:
-        cache = open(r"CACHE", "w+")
+    cache = open(path, 'r')
     path = cache.read()
     cache.close()
+
+    return path
+
+def cache_path() -> str:
+    exe_dir = os.path.dirname(sys.executable)
+    exe_dir2 = os.path.dirname(__file__)
+    if os.path.isfile(os.path.join(exe_dir, "CACHE")):
+        path = os.path.join(exe_dir, "CACHE")
+    elif os.path.isfile(os.path.join(exe_dir2, "CACHE")):
+        path = os.path.join(exe_dir2, "CACHE")
+    else:
+        try:
+            cache = open(os.path.join(exe_dir, "CACHE"), 'w+')
+            cache.close()
+            path = os.path.join(exe_dir, "CACHE")
+        except:
+            cache = open(os.path.join(exe_dir2, "CACHE"), 'w+')
+            cache.close()
+            path = os.path.join(exe_dir2, "CACHE")
 
     return path

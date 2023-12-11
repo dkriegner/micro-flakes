@@ -1,12 +1,39 @@
-import os
+from PyQt6.QtWidgets import QApplication, QWidget, QPushButton
 import sys
 
-# Get the path of the executable file
-exe_path = sys.executable
-print("The path of the executable file is:", exe_path)
+class MainWidget(QWidget):
 
-# Get the directory name from the path
-exe_dir = os.path.dirname(exe_path)
-print("The directory of the executable file is:", exe_dir)
+    def __init__(self):
+        super().__init__()
+        self.initUI()
 
-input("Press a key!")
+    def initUI(self):
+        self.button = QPushButton('Open New Widget', self)
+        self.button.clicked.connect(self.openNewWidget)
+        self.button.resize(150, 30)
+        self.button.move(50, 50)
+
+        self.setGeometry(300, 300, 250, 150)
+        self.setWindowTitle('Main Widget')
+        self.show()
+
+    def openNewWidget(self):
+        # Create a new widget instance
+        self.new_widget = NewWidget()
+        # Show the new widget
+        self.new_widget.show()
+
+class NewWidget(QWidget):
+
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(600, 300, 200, 100)
+        self.setWindowTitle('New Widget')
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main_widget = MainWidget()
+    sys.exit(app.exec())
