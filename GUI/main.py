@@ -262,15 +262,18 @@ class Configurations(QWidget):
         hbox.addWidget(self.label3)
 
         self.spinbox = QDoubleSpinBox()
+
+        self.spinbox.setRange(0, 10)
+        # Set the width of the spinbox to 100 pixels
+        self.spinbox.setFixedWidth(100)
+        self.spinbox.setDecimals(4)
+
         try:
             default_ratio = float(read_cache()[1])
             self.spinbox.setValue(default_ratio)  # Set the default value
         except:
             self.spinbox.setValue(0.187)  # Set the default value
-        self.spinbox.setRange(0, 10)
-        # Set the width of the spinbox to 100 pixels
-        self.spinbox.setFixedWidth(100)
-        self.spinbox.setDecimals(4)
+
         self.spinbox.setSingleStep(0.001)
         self.spinbox.setToolTip("Set scale to calculate of size and area of objects")
         hbox.addWidget(self.spinbox)
@@ -315,7 +318,7 @@ class Configurations(QWidget):
             for element in toWrite:
                 # Write the element to the file, followed by a newline character
                 file.write(element + '\n')
-        self.parent.logbox.appendPlainText(f"Default directory: {toWrite[0]}\nDefault scale: {toWrite[0]} um/px")
+        self.parent.logbox.appendPlainText(f"Default directory: {toWrite[0]}\nDefault scale: {toWrite[1]} um/px")
         self.close()
 
     def on_click2(self):
