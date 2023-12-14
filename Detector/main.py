@@ -33,9 +33,8 @@ def dialog() -> (str, str, bool, float, int):
 
     if settings == 0:
         # Take a new photo by USB webcam.
-        name = input("Write name of the new photo (without extension): ")
+        name = input("Write name of the new photo (with extension - jpg, bmp, ... ): ")
         take_webcam_image(path, name)
-        name += ".jpg"
     else:
         # Open existing photo in the working directory.
         print("Files in input:")
@@ -78,7 +77,7 @@ def line_command() -> (str, str, bool, float, int):
                         help="Do you want output images? Yes -> True, No -> False",
                         type=bool)
     parser.add_argument("-m", "--min_size",
-                        default=42.4 / 1.6952,
+                        default=42.4,
                         help="Write minimal area of edge of object in um^2. Smaller object will be deleted. Default "
                              "is 42.4 um.",
                         type=float)
@@ -90,7 +89,7 @@ def line_command() -> (str, str, bool, float, int):
 
     args = parser.parse_args()
 
-    return args.path, args.name, args.out1, args.min_size, args.sensitivity
+    return args.path, args.name, args.out1, args.min_size/1.6952, args.sensitivity
 
 
 def main():
