@@ -262,7 +262,6 @@ class Configurations(QWidget):
         hbox.addWidget(self.label3)
 
         self.spinbox = QDoubleSpinBox()
-<<<<<<< HEAD
 
         self.spinbox.setRange(0, 10)
         # Set the width of the spinbox to 100 pixels
@@ -275,11 +274,6 @@ class Configurations(QWidget):
         except:
             self.spinbox.setValue(0.187)  # Set the default value
 
-=======
-        # Set the width of the spinbox to 100 pixels
-        self.spinbox.setFixedWidth(100)
-        self.spinbox.setDecimals(4)
->>>>>>> 160de3d3b5f9b144ea3d086a47d5e1c1be621278
         self.spinbox.setSingleStep(0.001)
         self.spinbox.setToolTip("Set scale to calculate of size and area of objects")
         self.spinbox.setRange(0, 10)
