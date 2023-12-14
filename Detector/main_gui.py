@@ -6,8 +6,8 @@ import sys
 import os
 import logging as log
 
-from find_objects import ImageCrawler
-from functions import take_webcam_image, read_cache
+from .find_objects import ImageCrawler
+from .functions import take_webcam_image, read_cache_GUI
 
 
 class EmittingStream(QObject):
@@ -33,9 +33,9 @@ class MyApp(QWidget):
         self.log_stream = log_stream
         super().__init__()
         # default directory for explorer dialogs
-        self.default_dir = read_cache()[0]
+        self.default_dir = read_cache_GUI()[0]
         try:    # calibration factor to get real size of sample (converting from px to um)
-            self.calibration = float(read_cache()[1])
+            self.calibration = float(read_cache_GUI()[1])
         except:
             self.calibration = 0.187
 
@@ -236,7 +236,7 @@ class Configurations(QWidget):
         self.folder_name = None
         self.parent = parent
         # Set the default directory to the user's home directory
-        self.default_dir = read_cache()[0]
+        self.default_dir = read_cache_GUI()[0]
         super().__init__()
         self.initUI()
 
@@ -263,17 +263,11 @@ class Configurations(QWidget):
         self.spinbox.setFixedWidth(100)
         self.spinbox.setDecimals(4)
 
-        try:
-            default_ratio = float(read_cache()[1])
-            self.spinbox.setValue(default_ratio)  # Set the default value
-        except:
-            self.spinbox.setValue(0.187)  # Set the default value
-
         self.spinbox.setSingleStep(0.001)
         self.spinbox.setToolTip("Set scale to calculate of size and area of objects")
         self.spinbox.setRange(0, 10)
         try:
-            default_ratio = float(read_cache()[1])
+            default_ratio = float(read_cache_GUI()[1])
             self.spinbox.setValue(default_ratio)  # Set the default value
         except:
             self.spinbox.setValue(0.187)  # Set the default value

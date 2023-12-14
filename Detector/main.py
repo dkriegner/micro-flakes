@@ -1,6 +1,6 @@
 import os
-from find_objects import ImageCrawler
-from functions import (take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question,
+from .find_objects import ImageCrawler
+from .functions import (take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question,
                         cache_path)
 import argparse
 import logging as log

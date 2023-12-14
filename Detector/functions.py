@@ -147,3 +147,24 @@ def cache_path() -> str:
             path = os.path.join(exe_dir2, "CACHE")
 
     return path
+
+
+def read_cache_GUI() -> list:
+    """Open existing a cache file or create a new cache file."""
+    if os.path.isfile("CACHE"):
+        # Create an empty list to store the lines
+        lines = []
+        # Open the file in read mode
+        with open("CACHE", 'r') as file:
+            # Loop through each line in the file
+            for line in file:
+                # Strip the newline character and append the line to the list
+                lines.append(line.strip())
+        # Return the list of lines
+        file.close()
+        return lines
+    else:
+        file = open(r"CACHE", "w+")
+        file.close()
+        return ["", ""]
+

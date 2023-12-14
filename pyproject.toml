@@ -25,7 +25,7 @@ dependencies = [
 flakes-detector = "Detector.main:main"
 
 [project.gui-scripts]
-flakes-detector-GUI = "Detector.main_GUI:main"
+flakes-detector-GUI = "Detector.main_gui:main"
 
 [build-system]
 requires = ["flit_core >= 3.2, <4"]
