@@ -15,13 +15,13 @@ from .functions import change_contrast, gamma_correct, manage_subfolders
 
 class ImageCrawler(list):
     """
-    It loads the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of the detected
-    object with centres and area of detected edges in low resolution (self.output). It identifies objects on
-    an artificially lower-resolution image and stores them as a list of detected flakes (self.marked_objects).
-    Every flake is a list of coordinates [x, y] of squares 7×7 pixels. Every square contains the same pixel.
-    It is a method how to decrease resolution. Too small objects are removed (objects which contain less squares than
-    self.min_size). Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding
-    flakes from the 1st iteration in high resolution.
+    It loads the image from the disk into a PIL Image object (self.orig_photo) and creates a new photo of the
+    detected object with centres and area of detected edges in low resolution (self.output). It identifies objects on
+    an artificially lower-resolution image and stores them as a list of detected flakes (self.marked_objects). Every
+    flake is a list of coordinates [x, y] of squares 7×7 pixels. Every square contains the same pixel. It is a method
+    how to decrease resolution. Too small objects are removed (objects which contain fewer squares than
+    self.min_size). Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for
+    finding flakes from the 1st iteration in high resolution.
     """
 
     def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
@@ -102,12 +102,12 @@ class ImageCrawler(list):
 
     def _find_objects_low_resolution(self) -> list:
         """
-        It marks pixels having R, G, B bigger than the sensitivity value. It splits the image into a matrix which contains
-        groups of 7×7 pixels (squares). If a square contains more than 60 % marked pixels, it is marked as marked_pixel.
-        It is a list of (x, y) coordinates of centres of squares. Then, neighbour squares are connected to objects.
-        Objects are stored in marked_objects. It is a list of detected objects which are represented by a list of (x, y)
-        coordinates of centres of squares. Too small objects are removed from marked_objects. The list (marked_objects)
-        is the output of this function.
+        It marks pixels having R, G, B bigger than the sensitivity value. It splits the image into a matrix which
+        contains groups of 7×7 pixels (squares). If a square contains more than 60 % marked pixels, it is marked as
+        marked_pixel. It is a list of (x, y) coordinates of centres of squares. Then, neighbour squares are connected
+        to objects. Objects are stored in marked_objects. It is a list of detected objects which are represented by a
+        list of (x, y) coordinates of centres of squares. Too small objects are removed from marked_objects. The list
+        (marked_objects) is the output of this function.
         """
 
         marked_pixel = []  # A list of (x, y) coordinates of marked squares of 7 by 7 pixels.
@@ -195,10 +195,10 @@ class ImageCrawler(list):
                     test[k, m] = (0, 0, 0)
             p += 1
 
-        # Marked light pixel in original picture
-        self.orig_photo.save(f'{self.path}/output/{self.name}_first_step2.png')
         # Marked squares with 7 by 7 (potential object area in low resolution)
         self.output.save(f'{self.path}/output/{self.name}_first_step1.png')
+        # Marked light pixel in original picture
+        self.orig_photo.save(f'{self.path}/output/{self.name}_first_step2.png')
         # stored objects with a centre and an area of edge
         ts.save(f'{self.path}/output/{self.name}_first_step3.png')
         ts.close()  # close the 3rd image
@@ -470,7 +470,8 @@ class Flake:
 
 class ExcelOutput:
     """
-    Generate Excel sheet with identified flakes. The table contains a ID, images of objects and their all measures parameters.
+    Generate Excel sheet with identified flakes. The table contains an ID, images of objects
+    and their all measures parameters.
     """
 
     def __init__(self, image: ImageCrawler):

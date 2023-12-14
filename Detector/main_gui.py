@@ -217,8 +217,8 @@ class MyApp(QWidget):
             min_size = float(self.spinbox.value()) / 1.6952
             sensitivity = int(self.spinbox2.value())
 
-            self.logbox.appendPlainText(f'Finding flakes with user\'s parameters:\n'
-                                        f'Path: {path}\nName: {name}\nMin. size: {min_size * 1.6952}\nSensitivity: {sensitivity}')
+            self.logbox.appendPlainText(f'Finding flakes with user\'s parameters:\nPath: {path}\n'
+                                        f'Name: {name}\nMin. size: {min_size * 1.6952}\nSensitivity:{sensitivity}')
             self.logbox.repaint()
             log.debug(f'User entered: {name}, {path}, {more_output}, {min_size * 1.6952}, {sensitivity}')
 
@@ -325,7 +325,7 @@ class Configurations(QWidget):
         self.show()
 
     def chooseFolderDialog(self):
-        if not (self.default_dir is None):
+        if not self.default_dir:
             # Invoke the QFileDialog.getExistingDirectory function with the default directory
             self.folder_name = QFileDialog.getExistingDirectory(self, "Choose Folder", self.default_dir)
         else:
@@ -336,7 +336,7 @@ class Configurations(QWidget):
         # Open the file in write mode, which will overwrite the existing content
         if self.folder_name is None and self.default_dir is None:
             toWrite = ["", str(self.spinbox.value())]
-        elif self.folder_name is None and not (self.default_dir is None):
+        elif self.folder_name is None and not self.default_dir:
             toWrite = [self.default_dir, str(self.spinbox.value())]
         else:
             toWrite = [self.folder_name, str(self.spinbox.value())]
