@@ -1,9 +1,9 @@
 import os
 from .find_objects import ImageCrawler
-from .functions import (take_webcam_image, float_question, RGB_question, manage_subfolders, read_cache, yes_no_question,
-                        cache_path)
+from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_config, yes_no_question
 import argparse
 import logging as log
+from platformdirs import user_config_dir
 
 
 def dialog() -> (str, str, bool, float, int):
@@ -11,17 +11,15 @@ def dialog() -> (str, str, bool, float, int):
     print("Welcome in software to automatics detect object in microscope.")
     print("Project webpage: https://github.com/dkriegner/micro-flakes/tree/main/Detector\nVersion: 0.1.1\n")
 
-    # Find a cache file
-    cachepath = cache_path()
     # Load last working directory
-    path = read_cache(cachepath)
+    path = read_config()
 
     print(f"Working path: {path}")
     out2 = yes_no_question("Do you change the path?", False)
     if out2 == 1:
         # clear cache and write a new path
         path = input("New path: ")
-        cache = open(cachepath, 'w')
+        cache = open(user_config_dir("config_terminal", "flakes_detector"), 'w')
         cache.write(path)
         cache.close()
         print(f"Working path has set to {path}.")
@@ -108,5 +106,3 @@ def main():
     figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")
-
-main()  # For debuging in a code editor. Remove before install.

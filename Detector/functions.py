@@ -5,6 +5,9 @@ import os
 import sys
 import shutil
 from PIL import Image
+import time
+from platformdirs import user_config_dir
+
 
 
 def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
@@ -45,6 +48,10 @@ def take_webcam_image(path: str, filename: str):
     # cap.set(14, 500) # gain
     # Turn off auto exposure
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+    time.sleep(2)
+    # set resolution
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 5472)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 3648)
     # set exposure time
     cap.set(cv2.CAP_PROP_EXPOSURE, 0)
     # Set the ISO sensitivity to the maximum value
@@ -121,41 +128,31 @@ def manage_subfolders(path: str):
     os.makedirs(os.path.join(path1, path2))
 
 
-def read_cache(path: str) -> str:
-    """Open existing a cache file or make a new cache file."""
-    cache = open(path, 'r')
-    path = cache.read()
-    cache.close()
-
-    return path
-
-def cache_path() -> str:
-    exe_dir = os.path.dirname(sys.executable)
-    exe_dir2 = os.path.dirname(__file__)
-    if os.path.isfile(os.path.join(exe_dir, "CACHE")):
-        path = os.path.join(exe_dir, "CACHE")
-    elif os.path.isfile(os.path.join(exe_dir2, "CACHE")):
-        path = os.path.join(exe_dir2, "CACHE")
+def read_config() -> str:
+    """Open existing a configuration file or make a new file."""
+    if os.path.isfile(user_config_dir("config_terminal", "flakes_detector")):
+        config = open(user_config_dir("config_terminal", "flakes_detector"), 'r')
+        path = config.read()
+        config.close()
+        return path
     else:
-        try:
-            cache = open(os.path.join(exe_dir, "CACHE"), 'w+')
-            cache.close()
-            path = os.path.join(exe_dir, "CACHE")
-        except:
-            cache = open(os.path.join(exe_dir2, "CACHE"), 'w+')
-            cache.close()
-            path = os.path.join(exe_dir2, "CACHE")
+        # Create a directory
+        if not os.path.exists(os.path.dirname(user_config_dir("config_terminal", "flakes_detector"))):
+            os.makedirs(os.path.dirname(user_config_dir("config_terminal", "flakes_detector")))
 
-    return path
+        # Create configuration file
+        file = open(user_config_dir("config_terminal", "flakes_detector"), "w+")
+        file.close()
+        return ""
 
 
-def read_cache_GUI() -> list:
-    """Open existing a cache file or create a new cache file."""
-    if os.path.isfile("CACHE"):
+def read_cache() -> list:
+    """Open existing a configuration file or create a new cache file."""
+    if os.path.isfile(user_config_dir("config", "flakes_detector")):
         # Create an empty list to store the lines
         lines = []
         # Open the file in read mode
-        with open("CACHE", 'r') as file:
+        with open(user_config_dir("config", "flakes_detector"), "r") as file:
             # Loop through each line in the file
             for line in file:
                 # Strip the newline character and append the line to the list
@@ -164,7 +161,12 @@ def read_cache_GUI() -> list:
         file.close()
         return lines
     else:
-        file = open(r"CACHE", "w+")
+        # Create a directory
+        if not os.path.exists(os.path.dirname(user_config_dir("config", "flakes_detector"))):
+            os.makedirs(os.path.dirname(user_config_dir("config", "flakes_detector")))
+
+        # Create configuration file
+        file = open(user_config_dir("config", "flakes_detector"), "w+")
         file.close()
         return ["", ""]
 

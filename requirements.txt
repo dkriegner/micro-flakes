@@ -3,3 +3,4 @@ openpyxl>=3.0.9
 opencv-python>=4.6.0
 numpy>=1.25.2
 PyQt6
+platformdirs

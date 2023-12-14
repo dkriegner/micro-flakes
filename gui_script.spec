@@ -36,7 +36,9 @@ def Entrypoint(dist, group, name, **kwargs):
     )
 
 
-a = Entrypoint('Detector', 'gui_scripts', 'flakes-detector-GUI')
+a = Entrypoint('Detector', 'gui_scripts', 'flakes-detector-GUI',
+               datas=[('Detector/ICON.ico', 'Detector')],
+              )
 
 pyz = PYZ(a.pure)
 
@@ -59,4 +61,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['ICON.ico'],
 )
