@@ -9,7 +9,7 @@ import os
 import logging as log
 from threading import Thread
 
-from .functions import manage_subfolders, gamma_correct, change_contrast
+from functions import manage_subfolders, gamma_correct, change_contrast
 
 
 class ImageCrawler(list):
@@ -22,18 +22,17 @@ class ImageCrawler(list):
     self.min_size). Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding
     flakes from the 1st iteration in high resolution.
     """
-    def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float,
-                 input_app=0):
+    def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
         self.name = name  # The name of an image to load
         self.path = path  # The path of an image to load
         self.out1 = more_output  # Look at main.py (more_output)
         self.min_size = min_size  # Look at main.py
         self.sensitivity = sensitivity  # Look at main.py
         self.calibration = calibration  # Look at main.py
-        self.detected_object = []  # List of detected flakes. Every flake is a list of coordinates [x, y]
-        self.workbook = 0  # Excel table for a new catalogue
+        self.detected_object = list  # List of detected flakes. Every flake is a list of coordinates [x, y]
+        self.workbook = None  # Excel table for a new catalogue
         self.max_width = 0  # Parameter to set a width of an image column in Excel table.
-        self.input_app = input_app
+        self.progress = 0
 
         log.info("The first iteration:")
         manage_subfolders(path)
@@ -78,6 +77,7 @@ class ImageCrawler(list):
         for p in processes:
             p.join()
 
+        log.info("Creating the output table.")
         ExcelOutput(self)  # Create a catalogue from the list of flakes in an Excel table.
 
         if not self.out1 == 1:
@@ -241,13 +241,14 @@ class Flake:
         self.parent = parent
 
     def start(self):
-        log.info(f"{round(100*(self.id + 1)/len(self.parent.marked_objects), 1)} %")
         self.output, self.output2 = self._load_image2()
         self.org = self.parent.orig_photo.load()
         self.new = self.output.load()
         self.test = self.output2.load()
         self.marked_object2 = self._find_objects_high_resolution()
         self._measure()
+        self.parent.progress += 1
+        log.info(f"{round(100*self.parent.progress/len(self.parent.marked_objects), 1)} %")
         return None
 
     def _load_image2(self) -> (Image.Image, Image.Image):
@@ -469,14 +470,16 @@ class ExcelOutput:
     def __init__(self, image: ImageCrawler):
         self.workbook = Workbook()  # Create a new table
         self.image = image
-        self.filename = f"{image.path}/output/Catalogue_{image.name}.xlsx"  # Set the name of the table
-        self.image_name = f"{image.path}/output/objects/{image.name}_object"  # The beginnig of names of images adding to the table
+        self.filename = os.path.join(image.path, "output", "Catalogue_{image.name}.xlsx")  # Set the name of the table
+        # The name of an image to add to the table
+        self.image_name = os.path.join(image.path, "output", "objects", f"{image.name}_object")
         # Create a header of the table with configuration of measuring and explanatory notes
         self._generate_metadata_header()
         # Add all stored flakes in self.detected_object in ImageCrawler
         self._generate_object_table()
         # Save the table
         self._save_to_disk()
+        log.info(f"The Excel table has been stored to {self.filename}.")
 
     def _generate_metadata_header(self):
         """Insert general information (min_size, sensitivity, calibration)"""

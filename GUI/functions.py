@@ -5,6 +5,7 @@ import os
 import shutil
 from PIL import Image
 import time
+from platformdirs import user_config_dir
 
 # set logging to terminal
 log.getLogger().setLevel(log.INFO)
@@ -125,12 +126,12 @@ def manage_subfolders(path: str):
 
 
 def read_cache() -> list:
-    """Open existing a cache file or create a new cache file."""
-    if os.path.isfile("CACHE"):
+    """Open existing a configuration file or create a new cache file."""
+    if os.path.isfile(user_config_dir("config", "flakes_detector")):
         # Create an empty list to store the lines
         lines = []
         # Open the file in read mode
-        with open("CACHE", 'r') as file:
+        with open(user_config_dir("config", "flakes_detector"), "r") as file:
             # Loop through each line in the file
             for line in file:
                 # Strip the newline character and append the line to the list
@@ -139,7 +140,12 @@ def read_cache() -> list:
         file.close()
         return lines
     else:
-        file = open(r"CACHE", "w+")
+        # Create a directory
+        if not os.path.exists(os.path.dirname(user_config_dir("config", "flakes_detector"))):
+            os.makedirs(os.path.dirname(user_config_dir("config", "flakes_detector")))
+
+        # Create configuration file
+        file = open(user_config_dir("config", "flakes_detector"), "w+")
         file.close()
         return ["", ""]
 

@@ -8,6 +8,8 @@ import logging as log
 
 from find_objects import ImageCrawler
 from functions import take_webcam_image, read_cache
+from platformdirs import user_config_dir
+
 
 
 class EmittingStream(QObject):
@@ -32,12 +34,15 @@ class MyApp(QWidget):
         self.fileName = None
         self.log_stream = log_stream
         super().__init__()
-        # default directory for explorer dialogs
-        self.default_dir = read_cache()[0]
-        try:    # calibration factor to get real size of sample (converting from px to um)
+
+        try:
+            # default directory for explorer dialogs
+            self.default_dir = read_cache()[0]
+            # calibration factor to get real size of sample (converting from px to um)
             self.calibration = float(read_cache()[1])
         except:
             self.calibration = 0.187
+            self.default_dir = ""
 
         self.initUI()
 
@@ -235,8 +240,13 @@ class Configurations(QWidget):
     def __init__(self, parent: MyApp):
         self.folder_name = None
         self.parent = parent
-        # Set the default directory to the user's home directory
-        self.default_dir = read_cache()[0]
+
+        try:
+            # Set the default directory to the user's home directory
+            self.default_dir = read_cache()[0]
+        except:
+            # Set the default directory to the user's home directory
+            self.default_dir = ""
         super().__init__()
         self.initUI()
 
@@ -314,7 +324,7 @@ class Configurations(QWidget):
         else:
             toWrite = [self.folder_name, str(self.spinbox.value())]
 
-        with open("CACHE", 'w') as file:
+        with open(user_config_dir("config", "flakes_detector"), 'w') as file:
             # Loop through each element in the list
             for element in toWrite:
                 # Write the element to the file, followed by a newline character
@@ -350,4 +360,4 @@ def main():
     sys.exit(app.exec())
 
 
-#main()
+main()
