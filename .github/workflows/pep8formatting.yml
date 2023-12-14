@@ -40,10 +40,10 @@ jobs:
           isort --line-length 100 .
       - name: Set autopep8 branch name
         id: vars
-        run: echo ::set-output name=branch-name::"autopep8-patches/${{ github.head_ref }}"
+        run: echo "{branch-name}={autopep8-patches/${{ github.head_ref }}}" >> $GITHUB_OUTPUT
       - name: Create Pull Request
         if: steps.autopep8.outcome == 'failure' || steps.autoflakecheck.outcome == 'failure' || steps.isortcheck.outcome == 'failure'
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v5
         with:
           commit-message: pep8formatting action fixes
           title: Fixes by autopep8 action
