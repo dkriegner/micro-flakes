@@ -38,9 +38,6 @@ jobs:
         id: isortfix
         run: |
           isort --line-length 100 .
-      - name: Set autopep8 branch name
-        id: vars
-        run: echo "{branch-name}={autopep8-patches/${{ github.head_ref }}}" >> $GITHUB_OUTPUT
       - name: Create Pull Request
         if: steps.autopep8.outcome == 'failure' || steps.autoflakecheck.outcome == 'failure' || steps.isortcheck.outcome == 'failure'
         uses: peter-evans/create-pull-request@v5
@@ -49,7 +46,6 @@ jobs:
           title: Fixes by autopep8 action
           body: This is an auto-generated PR with fixes by autopep8 and autoflake.
           labels: autopep8, automated pr
-          branch: ${{ steps.vars.outputs.branch-name }}
       - name: Fail if autopep8 made changes
         if: steps.autopep8.outcome == 'failure' || steps.autoflakecheck.outcome == 'failure' || steps.isortcheck.outcome == 'failure'
         run: exit 1
