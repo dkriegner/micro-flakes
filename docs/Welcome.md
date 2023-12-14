@@ -4,7 +4,7 @@ layout: page
 permalink: /micro-flakes/
 ---
 
-# About
+# About ..
 
 This software is designed to detect objects under a microscope with darkfield objectives automatically. Jiri Zelenka and Dominik Kriegner created it for the Institute of Physics of the Czech Academy of Sciences. The software is optimized for Python 3.11.4 in MS Windows.
 
