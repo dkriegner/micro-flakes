@@ -1,11 +1,11 @@
 [project]
 name = "Detector"
-version = "0.0.1"
+version = "0.1.1"
 authors = [
-  {name = "Jiri Zelenka", email = "jirka-zelenka@centrum.cz"},
+  {name = "Jiri Zelenka", email = "zelenka@fzu.cz"},
   {name = "Dominik Kriegner", email = "kriegner@fzu.cz"},
 ]
-description = "This software searchs good flakes from photo or webcam in a microscope."
+description = "This software searchs good flakes from a photo or a webcam in a microscope."
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
@@ -19,6 +19,7 @@ dependencies = [
     "opencv-python >= 4.6.0",
     "numpy >= 1.25.2",
     "PyQt6",
+    "platformdirs",
 ]
 
 [project.scripts]

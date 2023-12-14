@@ -9,7 +9,7 @@ import os
 import logging as log
 from threading import Thread
 
-from functions import manage_subfolders, gamma_correct, change_contrast
+from .functions import manage_subfolders, gamma_correct, change_contrast
 
 
 class ImageCrawler(list):

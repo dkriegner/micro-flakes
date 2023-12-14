@@ -6,8 +6,8 @@ import sys
 import os
 import logging as log
 
-from find_objects import ImageCrawler
-from functions import take_webcam_image, read_cache
+from .find_objects import ImageCrawler
+from .functions import take_webcam_image, read_cache
 from platformdirs import user_config_dir
 
 
@@ -360,4 +360,4 @@ def main():
     sys.exit(app.exec())
 
 
-main()
+#main()

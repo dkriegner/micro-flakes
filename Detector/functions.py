@@ -139,3 +139,28 @@ def read_config() -> str:
         file = open(user_config_dir("config_terminal", "flakes_detector"), "w+")
         file.close()
         return ""
+
+
+def read_cache() -> list:
+    """Open existing a configuration file or create a new cache file."""
+    if os.path.isfile(user_config_dir("config", "flakes_detector")):
+        # Create an empty list to store the lines
+        lines = []
+        # Open the file in read mode
+        with open(user_config_dir("config", "flakes_detector"), "r") as file:
+            # Loop through each line in the file
+            for line in file:
+                # Strip the newline character and append the line to the list
+                lines.append(line.strip())
+        # Return the list of lines
+        file.close()
+        return lines
+    else:
+        # Create a directory
+        if not os.path.exists(os.path.dirname(user_config_dir("config", "flakes_detector"))):
+            os.makedirs(os.path.dirname(user_config_dir("config", "flakes_detector")))
+
+        # Create configuration file
+        file = open(user_config_dir("config", "flakes_detector"), "w+")
+        file.close()
+        return ["", ""]
