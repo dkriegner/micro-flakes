@@ -14,15 +14,28 @@ pip install -e .
 > For more information visit this webpage: https://flit.pypa.io/en/stable/.
 
 
-### Manual
+### Creating the executable fila
 To run this software, Python 3 and the following libraries are required:
 - PIL
 - openpyxl
 - cv2
 - numpy
-
+- PyQt6
+- platformdirs
+  
 To install, use the following command:
 ```
 pip install -r requirements.txt
 ```
 It is necessary to have PIP in Python installed. To install, visit this webpage: https://pip.pypa.io/en/stable/installation/.
+
+Then use the following commands to create the exe file:
+```
+pyinstaller .\gui_script.spec
+```
+or
+```
+pyinstaller .\gui_script.spec
+```
+
+
