@@ -5,6 +5,7 @@ import os
 import sys
 import shutil
 from PIL import Image
+import time
 from platformdirs import user_config_dir
 
 
@@ -47,6 +48,10 @@ def take_webcam_image(path: str, filename: str):
     # cap.set(14, 500) # gain
     # Turn off auto exposure
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)
+    time.sleep(2)
+    # set resolution
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 5472)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 3648)
     # set exposure time
     cap.set(cv2.CAP_PROP_EXPOSURE, 0)
     # Set the ISO sensitivity to the maximum value
@@ -164,3 +169,4 @@ def read_cache() -> list:
         file = open(user_config_dir("config", "flakes_detector"), "w+")
         file.close()
         return ["", ""]
+

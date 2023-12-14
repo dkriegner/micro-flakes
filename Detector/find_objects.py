@@ -470,7 +470,7 @@ class ExcelOutput:
     def __init__(self, image: ImageCrawler):
         self.workbook = Workbook()  # Create a new table
         self.image = image
-        self.filename = os.path.join(image.path, "output", "Catalogue_{image.name}.xlsx")  # Set the name of the table
+        self.filename = os.path.join(image.path, "output", f"Catalogue_{image.name}.xlsx")  # Set the name of the table
         # The name of an image to add to the table
         self.image_name = os.path.join(image.path, "output", "objects", f"{image.name}_object")
         # Create a header of the table with configuration of measuring and explanatory notes
@@ -517,7 +517,7 @@ class ExcelOutput:
         return None
 
     def _generate_object_table(self):
-        """Insert object table header and contenct"""
+        """Insert object table header and content"""
         # generate header ...
         # iterate over all flakes
         sheet = self.workbook.active
