@@ -25,6 +25,7 @@ class ImageCrawler(list):
     """
 
     def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
+        super().__init__()
         self.name = name  # The name of an image to load
         self.path = path  # The path of an image to load
         self.out1 = more_output  # Look at main.py (more_output)
@@ -58,8 +59,9 @@ class ImageCrawler(list):
             # identify corners of objects
             x_min, x_max, y_min, y_max = (int(min(x for (x, y) in q)), int(max(x for (x, y) in q)),
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
-            # if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
-            # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes from the 1st iteraction in high resolution.
+            # if (x_max - x_min)*(y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
+            # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes
+            # from the 1st interaction in high resolution.
             self.append(Flake(self, index, (x_min, x_max, y_min, y_max)))  # One parallel process (old)
 
         # Create an empty list of processes
@@ -124,8 +126,8 @@ class ImageCrawler(list):
                 red = 0  # number of red pixels
                 px = 0  # number of all pixels
                 for k in range(i - 3, i + 3):
-                    for l in range(j - 3, j + 3):
-                        if self.pro[k, l] == (255, 0, 0):
+                    for m in range(j - 3, j + 3):
+                        if self.pro[k, m] == (255, 0, 0):
                             red += 1
                         px += 1
                 if px != 0:
@@ -330,8 +332,8 @@ class Flake:
             for n in marked_object:
                 for (i, j) in n:
                     for k in range(i - 1, i + 1):
-                        for l in range(j - 1, j + 1):
-                            self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (256, 0, 0)
+                        for m in range(j - 1, j + 1):
+                            self.test[k - self.coordinates[0] - 1 + 5, m - self.coordinates[2] - 1 + 5] = (256, 0, 0)
         elif len(marked_object) > 1:  # if more object were detected
             mx = max(len(x) for x in marked_object)
             for n in marked_object:
@@ -339,8 +341,8 @@ class Flake:
                     self.best = n
                     for (i, j) in n:
                         for k in range(i - 1, i + 1):
-                            for l in range(j - 1, j + 1):
-                                self.test[k - self.coordinates[0] - 1 + 5, l - self.coordinates[2] - 1 + 5] = (256, 0, 0)
+                            for m in range(j - 1, j + 1):
+                                self.test[k - self.coordinates[0] - 1 + 5, m - self.coordinates[2] - 1 + 5] = (256, 0, 0)
         return marked_object
 
     def _measure(self):

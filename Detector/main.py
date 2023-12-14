@@ -54,8 +54,8 @@ def dialog() -> (str, str, bool, float, int):
     min_size /= 1.6952  # convert size from micro meters to pixels
 
     # Parameter to mark pixel with a potential object.
-    sensitivity = RGB_question(
-        "Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input.", 40)
+    sensitivity = RGB_question("Write sensitivity of script on objects in dark field. Script will mark all"
+                               "pixels with RGB values bigger than the user\'s input.", 40)
 
     return path, name, more_output, min_size, sensitivity
 
@@ -78,12 +78,14 @@ def line_command() -> (str, str, bool, float, int):
                         help="Do you want output images? Yes -> True, No -> False",
                         type=bool)
     parser.add_argument("-m", "--min_size",
-                        default=42.4/1.6952,
-                        help="Write minimal area of edge of object in um^2. Smaller object will be deleted. Default is 42.4 um.",
+                        default=42.4 / 1.6952,
+                        help="Write minimal area of edge of object in um^2. Smaller object will be deleted. Default "
+                             "is 42.4 um.",
                         type=float)
     parser.add_argument("-s", "--sensitivity",
                         default=40,
-                        help="Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input. Default is 40",
+                        help="Write sensitivity of script on objects in dark field. Script will mark all pixels with "
+                             "RGB values bigger than the user\'s input. Default is 40",
                         type=int)
 
     args = parser.parse_args()
@@ -106,6 +108,6 @@ def main():
         path, name, more_output, min_size, sensitivity = dialog()
 
     # Load an image, find all flakes and make a catalogue them.
-    figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
+    ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
     input("\nThe task has been finished. Press some key for close a script.")

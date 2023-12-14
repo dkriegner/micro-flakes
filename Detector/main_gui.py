@@ -30,6 +30,22 @@ class MyApp(QWidget):
     """Create a windows widget with user's input dialog."""
 
     def __init__(self, log_stream):
+        self.button3 = None
+        self.weblink = None
+        self.label5 = None
+        self.logbox = None
+        self.config = None
+        self.save = None
+        self.spinbox2 = None
+        self.label4 = None
+        self.spinbox = None
+        self.checkbox1 = None
+        self.label3 = None
+        self.saveButton = None
+        self.button = None
+        self.label1 = None
+        self.label0 = None
+        self.new_widget = None
         self.output = None
         self.fileName = None
         self.log_stream = log_stream
@@ -238,6 +254,10 @@ class Configurations(QWidget):
     """Create a windows widget with user's configurations."""
 
     def __init__(self, parent: MyApp):
+        self.button = None
+        self.spinbox = None
+        self.label3 = None
+        self.discard = None
         self.folder_name = None
         self.parent = parent
 
@@ -294,7 +314,7 @@ class Configurations(QWidget):
 
         self.save = QPushButton('Apply')
         self.save.clicked.connect(self.on_click)
-        self.save.setToolTip("Save configurations to CACHE")
+        self.save.setToolTip("Save configurations to the config file")
         hbox2.addWidget(self.save)
 
         self.discard = QPushButton('Cancel')
@@ -343,21 +363,16 @@ def main():
     sys.stdout = log_stream
     handlers.append(log.StreamHandler(stream=log_stream))
     log.basicConfig(level=log.INFO, handlers=handlers, format='%(message)s')
-    logger = log.getLogger(os.path.split(__file__)[-1])
 
     if os.name == 'nt':
         try:
             from ctypes import windll  # Only exists on Windows.
-
-            myappid = f'python.micro-flakes.gui.version'
+            myappid = 'python.micro-flakes.gui.version'
             windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         except ImportError:
             pass
 
     # Create window widget
     app = QApplication(sys.argv)
-    ex = MyApp(log_stream)
+    MyApp(log_stream)
     sys.exit(app.exec())
-
-
-# main()

@@ -86,10 +86,10 @@ def float_question(question: str, default: float | None = None) -> float:
         return float_question(question, default)
 
 
-def RGB_question(question: int, default: int | None = None) -> int:
+def RGB_question(question: str, default: int | None = None) -> int:
     """Get an integer answer between 0 and 255 for a question."""
     choices = f' [{default}]: ' if default else ':'
-    reply = str(input(question + choices)).lower().strip() or default
+    reply = input(question + choices).lower().strip() or default
     try:
         test = int(reply)
         if 0 <= test <= 255:
