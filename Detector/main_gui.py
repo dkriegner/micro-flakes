@@ -1,15 +1,15 @@
-from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QPlainTextEdit,
-                             QFileDialog, QCheckBox, QSpinBox, QDoubleSpinBox, QHBoxLayout)
-from PyQt6.QtCore import Qt, QObject, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QIcon, QTextCursor
-import sys
-import os
 import logging as log
+import os
+import sys
+
+from platformdirs import user_config_dir
+from PyQt6.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtGui import QIcon, QTextCursor
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel, QPlainTextEdit,
+                             QPushButton, QSpinBox, QVBoxLayout, QWidget)
 
 from .find_objects import ImageCrawler
-from .functions import take_webcam_image, read_cache
-from platformdirs import user_config_dir
-
+from .functions import read_cache, take_webcam_image
 
 
 class EmittingStream(QObject):
@@ -360,4 +360,4 @@ def main():
     sys.exit(app.exec())
 
 
-#main()
+# main()
