@@ -28,16 +28,16 @@ jobs:
         id: autopep8
         continue-on-error: true
         run: |
-          autopep8 --recursive --in-place --exit-code .
+          autopep8 --max-line-length 127 --recursive --in-place --exit-code .
       - name: isortcheck
         id: isortcheck
         continue-on-error: true
         run: |
-          isort --line-length 100 --check .
+          isort --line-length 127 --check .
       - name: isort-fix
         id: isortfix
         run: |
-          isort --line-length 100 .
+          isort --line-length 127 .
       - name: Create Pull Request
         if: steps.autopep8.outcome == 'failure' || steps.autoflakecheck.outcome == 'failure' || steps.isortcheck.outcome == 'failure'
         uses: peter-evans/create-pull-request@v5
