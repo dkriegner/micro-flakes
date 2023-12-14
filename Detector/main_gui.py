@@ -51,12 +51,15 @@ class MyApp(QWidget):
         self.log_stream = log_stream
         super().__init__()
 
-        try:
+        if len(read_cache()) == 2:
             # default directory for explorer dialogs
             self.default_dir = read_cache()[0]
-            # calibration factor to get real size of sample (converting from px to um)
-            self.calibration = float(read_cache()[1])
-        except:
+            try:
+                # calibration factor to get real size of sample (converting from px to um)
+                self.calibration = float(read_cache()[1])
+            except ValueError:
+                self.calibration = 0.187
+        else:
             self.calibration = 0.187
             self.default_dir = ""
 
@@ -208,39 +211,36 @@ class MyApp(QWidget):
     def on_click(self):
         """Action of Start button."""
         # Get user input from the widget.
-        try:
-            str(self.fileName)
-        except:
+        if type(self.fileName) == str:
+            path, name = os.path.split(self.fileName)
+            more_output = self.checkbox1.isChecked()
+            min_size = float(self.spinbox.value()) / 1.6952
+            sensitivity = int(self.spinbox2.value())
+
+            self.logbox.appendPlainText(f'Finding flakes with user\'s parameters:\n'
+                                        f'Path: {path}\nName: {name}\nMin. size: {min_size * 1.6952}\nSensitivity: {sensitivity}')
+            self.logbox.repaint()
+            log.debug(f'User entered: {name}, {path}, {more_output}, {min_size * 1.6952}, {sensitivity}')
+
+            # Load an image, find all flakes and make a catalogue them.
+            figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, self.calibration)
+            self.logbox.appendPlainText(
+                f"The task has been finished. {len(figure1.marked_objects)} objects have been processed.\n"
+                f"The catalogue is saved to: {path}/output/Catalogue_{name}.xlsx")
+            self.output = f"{path}/output/Catalogue_{name}.xlsx"
+        else:
             self.logbox.appendPlainText('Nothing input is selected!')
-            return None
-        path, name = os.path.split(self.fileName)
 
-        more_output = self.checkbox1.isChecked()
-
-        min_size = float(self.spinbox.value()) / 1.6952
-
-        sensitivity = int(self.spinbox2.value())
-
-        self.logbox.appendPlainText(f'Finding flakes with user\'s parameters:\n'
-                                    f'Path: {path}\nName: {name}\nMin. size: {min_size * 1.6952}\nSensitivity: {sensitivity}')
-        self.logbox.repaint()
-        log.debug(f'User entered: {name}, {path}, {more_output}, {min_size * 1.6952}, {sensitivity}')
-
-        # Load an image, find all flakes and make a catalogue them.
-        figure1 = ImageCrawler(path, name, more_output, min_size, sensitivity, self.calibration)
-        self.logbox.appendPlainText(
-            f"The task has been finished. {len(figure1.marked_objects)} objects have been processed.\n"
-            f"The catalogue is saved to: {path}/output/Catalogue_{name}.xlsx")
-        self.output = f"{path}/output/Catalogue_{name}.xlsx"
+        return None
 
     def on_click2(self):
         """Action of Open catalogue in Excel button."""
-        try:
+        if os.path.exists(self.output):
             if sys.platform.startswith('win'):
                 os.system(self.output)
             else:
                 os.system(f"xdg-open {self.output}")
-        except:
+        else:
             self.logbox.appendPlainText("There is no output. Click to start!")
 
     def on_click3(self):
@@ -261,10 +261,10 @@ class Configurations(QWidget):
         self.folder_name = None
         self.parent = parent
 
-        try:
+        if len(read_cache()) == 2:
             # Set the default directory to the user's home directory
             self.default_dir = read_cache()[0]
-        except:
+        else:
             # Set the default directory to the user's home directory
             self.default_dir = ""
         super().__init__()
@@ -292,21 +292,18 @@ class Configurations(QWidget):
         # Set the width of the spinbox to 100 pixels
         self.spinbox.setFixedWidth(100)
         self.spinbox.setDecimals(4)
-
-        try:
-            default_ratio = float(read_cache()[1])
-            self.spinbox.setValue(default_ratio)  # Set the default value
-        except:
-            self.spinbox.setValue(0.187)  # Set the default value
-
+        if len(read_cache()) == 2:
+            try:
+                # calibration factor to get real size of sample (converting from px to um)
+                default_ratio = float(read_cache()[1])
+            except ValueError:
+                default_ratio = 0.187
+        else:
+            default_ratio = 0.187
+        self.spinbox.setValue(default_ratio)  # Set the default value
         self.spinbox.setSingleStep(0.001)
         self.spinbox.setToolTip("Set scale to calculate of size and area of objects")
         self.spinbox.setRange(0, 10)
-        try:
-            default_ratio = float(read_cache()[1])
-            self.spinbox.setValue(default_ratio)  # Set the default value
-        except:
-            self.spinbox.setValue(0.187)  # Set the default value
         hbox.addWidget(self.spinbox)
 
         hbox2 = QHBoxLayout()  # Create a horizontal box layout for the buttons
