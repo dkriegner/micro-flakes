@@ -1,9 +1,11 @@
-import os
-from .find_objects import ImageCrawler
-from .functions import take_webcam_image, float_question, RGB_question, manage_subfolders, read_config, yes_no_question
 import argparse
 import logging as log
+import os
+
 from platformdirs import user_config_dir
+
+from .find_objects import ImageCrawler
+from .functions import RGB_question, float_question, manage_subfolders, read_config, take_webcam_image, yes_no_question
 
 
 def dialog() -> (str, str, bool, float, int):
@@ -52,7 +54,8 @@ def dialog() -> (str, str, bool, float, int):
     min_size /= 1.6952  # convert size from micro meters to pixels
 
     # Parameter to mark pixel with a potential object.
-    sensitivity = RGB_question("Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input.", 40)
+    sensitivity = RGB_question(
+        "Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input.", 40)
 
     return path, name, more_output, min_size, sensitivity
 
@@ -63,25 +66,25 @@ def line_command() -> (str, str, bool, float, int):
 
     # add parameters
     parser.add_argument("-p", "--path",
-    nargs='?', const='Nothing',
-    help="The path where input and output folder is or will be created.",
-    type=str)
+                        nargs='?', const='Nothing',
+                        help="The path where input and output folder is or will be created.",
+                        type=str)
     parser.add_argument("-n", "--name",
-    nargs='?', const='Nothing',
-    help="The name of the input image",
-    type=str)
+                        nargs='?', const='Nothing',
+                        help="The name of the input image",
+                        type=str)
     parser.add_argument("-o", "--out1",
-    default=False,
-    help="Do you want output images? Yes -> True, No -> False",
-    type=bool)
+                        default=False,
+                        help="Do you want output images? Yes -> True, No -> False",
+                        type=bool)
     parser.add_argument("-m", "--min_size",
-    default= 42.4/1.6952,
-    help="Write minimal area of edge of object in um^2. Smaller object will be deleted. Default is 42.4 um.",
-    type=float)
+                        default=42.4/1.6952,
+                        help="Write minimal area of edge of object in um^2. Smaller object will be deleted. Default is 42.4 um.",
+                        type=float)
     parser.add_argument("-s", "--sensitivity",
-    default=40,
-    help="Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input. Default is 40",
-    type=int)
+                        default=40,
+                        help="Write sensitivity of script on objects in dark field. Script will mark all pixels with RGB values bigger than the user\'s input. Default is 40",
+                        type=int)
 
     args = parser.parse_args()
 
@@ -96,7 +99,7 @@ def main():
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
 
-    path, name, more_output, min_size, sensitivity = line_command() # Try to read a line-command input.
+    path, name, more_output, min_size, sensitivity = line_command()  # Try to read a line-command input.
 
     if path is None:  # If there is no parameter from command line
         # Print a welcome screen and ask user's inputs. This function can make a new image by a USB webcam.
