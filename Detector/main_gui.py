@@ -325,7 +325,7 @@ class Configurations(QWidget):
         self.show()
 
     def chooseFolderDialog(self):
-        if not self.default_dir:
+        if self.default_dir:
             # Invoke the QFileDialog.getExistingDirectory function with the default directory
             self.folder_name = QFileDialog.getExistingDirectory(self, "Choose Folder", self.default_dir)
         else:
@@ -334,9 +334,9 @@ class Configurations(QWidget):
 
     def on_click(self):
         # Open the file in write mode, which will overwrite the existing content
-        if self.folder_name is None and self.default_dir is None:
+        if not self.folder_name and not self.default_dir:
             toWrite = ["", str(self.spinbox.value())]
-        elif self.folder_name is None and not self.default_dir:
+        elif not self.folder_name and self.default_dir:
             toWrite = [self.default_dir, str(self.spinbox.value())]
         else:
             toWrite = [self.folder_name, str(self.spinbox.value())]
