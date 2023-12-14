@@ -1,13 +1,12 @@
 """This file contains definitions of simple function."""
 import logging as log
-import cv2
 import os
-import sys
 import shutil
-from PIL import Image
 import time
-from platformdirs import user_config_dir
 
+import cv2
+from PIL import Image
+from platformdirs import user_config_dir
 
 
 def gamma_correct(im: Image.Image, gamma1: float) -> Image.Image:
@@ -169,4 +168,3 @@ def read_cache() -> list:
         file = open(user_config_dir("config", "flakes_detector"), "w+")
         file.close()
         return ["", ""]
-

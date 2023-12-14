@@ -1,15 +1,16 @@
 """This file contains definitions of objects."""
-from PIL import Image, ImageDraw
+import logging as log
+import os
+import shutil
+from threading import Thread
+
+import cv2
 import numpy as np
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as pyxl_Image
-import cv2
-import shutil
-import os
-import logging as log
-from threading import Thread
+from PIL import Image, ImageDraw
 
-from .functions import manage_subfolders, gamma_correct, change_contrast
+from .functions import change_contrast, gamma_correct, manage_subfolders
 
 
 class ImageCrawler(list):
@@ -22,6 +23,7 @@ class ImageCrawler(list):
     self.min_size). Then, it creates a new object for each flake (Flake object). It repeats the same algorithm for finding
     flakes from the 1st iteration in high resolution.
     """
+
     def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
         self.name = name  # The name of an image to load
         self.path = path  # The path of an image to load
@@ -58,7 +60,7 @@ class ImageCrawler(list):
                                           int(min(y for (x, y) in q)), int(max(y for (x, y) in q)))
             # if (x_max - x_min) * (y_max - y_min) < 50000:  # work around a bug where too big objects are linked together
             # Create a new object for each flake. Flake() repeat the same algorithm for finding flakes from the 1st iteraction in high resolution.
-            self.append(Flake(self, index, (x_min, x_max, y_min, y_max))) # One parallel process (old)
+            self.append(Flake(self, index, (x_min, x_max, y_min, y_max)))  # One parallel process (old)
 
         # Create an empty list of processes
         processes = []
@@ -216,6 +218,7 @@ class Flake:
     is self.marked_object2. It has the same structure as self.marked_object in ImageCrawler. The 3rd function
     (self._measure) measures many parameters of objects which is stored in self.marked_object2.
     """
+
     def __init__(self, parent: ImageCrawler, identifier: int, coordinates: (int, int, int, int)):
         """Process flake in high resolution."""
         # calibration for converting to the real size
@@ -255,7 +258,7 @@ class Flake:
         """Crop original image and make output images"""
 
         output = Image.new('RGB', (self.coordinates[1] - self.coordinates[0] + 8,
-                               self.coordinates[3] - self.coordinates[2] + 8), color='white')  # create a new image
+                                   self.coordinates[3] - self.coordinates[2] + 8), color='white')  # create a new image
         output2 = output.copy()
         return output, output2
 
@@ -344,7 +347,7 @@ class Flake:
         """Measure coordinates of centre of gravity, size, height of an object."""
         # measure centre
         self.centre = ((int(sum(x for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best])),
-                   int(sum(y for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best]))))
+                        int(sum(y for (x, y) in self.marked_object2[self.best]) / len(self.marked_object2[self.best]))))
 
         # mark shapes of image
         shape = self.output.copy()
@@ -436,9 +439,9 @@ class Flake:
     @property
     def ratio(self) -> float:
         return max(((-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5) / 4) / (
-                4 * self.full_size2 / (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)),
-                (4 * self.full_size2 / (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)) / (
-                (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5) / 4))
+            4 * self.full_size2 / (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)),
+            (4 * self.full_size2 / (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5)) / (
+            (-self.size2 - (self.size2 ** 2 - 16 * self.full_size2) ** 0.5) / 4))
 
     @property
     def contourI(self) -> int:
@@ -467,6 +470,7 @@ class ExcelOutput:
     """
     Generate Excel sheet with identified flakes. The table contains a ID, images of objects and their all measures parameters.
     """
+
     def __init__(self, image: ImageCrawler):
         self.workbook = Workbook()  # Create a new table
         self.image = image
