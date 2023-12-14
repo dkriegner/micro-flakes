@@ -14,7 +14,7 @@ pip install -e .
 > For more information visit this webpage: https://flit.pypa.io/en/stable/.
 
 
-### Creating the executable fila
+### Creating the executable file manually (MS Windows and Mac OS X)
 To run this software, Python 3 and the following libraries are required:
 - PIL
 - openpyxl
@@ -37,5 +37,6 @@ or
 ```
 pyinstaller .\gui_script.spec
 ```
+The spec files are written for Windows. Please take a look at https://pyinstaller.org/en/stable/usage.html to switch to Mac.
 
 
