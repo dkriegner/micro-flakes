@@ -371,5 +371,5 @@ def main():
 
     # Create window widget
     app = QApplication(sys.argv)
-    MyApp(log_stream)
+    mainWidget = MyApp(log_stream)
     sys.exit(app.exec())

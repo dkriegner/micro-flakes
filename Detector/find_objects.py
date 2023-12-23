@@ -25,7 +25,6 @@ class ImageCrawler(list):
     """
 
     def __init__(self, path: str, name: str, more_output: bool, min_size: float, sensitivity: int, calibration: float):
-        super().__init__()
         self.name = name  # The name of an image to load
         self.path = path  # The path of an image to load
         self.out1 = more_output  # Look at main.py (more_output)
