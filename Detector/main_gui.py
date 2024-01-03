@@ -1,6 +1,7 @@
 import logging as log
 import os
 import sys
+import configparser
 
 from platformdirs import user_config_dir
 from PyQt6.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
@@ -341,11 +342,13 @@ class Configurations(QWidget):
         else:
             toWrite = [self.folder_name, str(self.spinbox.value())]
 
-        with open(user_config_dir("config", "flakes_detector"), 'w') as file:
-            # Loop through each element in the list
-            for element in toWrite:
-                # Write the element to the file, followed by a newline character
-                file.write(element + '\n')
+        # Create a ConfigParser object
+        config = configparser.ConfigParser()
+
+        # Write the values to the configuration file
+        config.set("DEFAULT", "Directory", toWrite[0])
+        config.set("DEFAULT", "SizeRatio", toWrite[1])
+
         self.parent.logbox.appendPlainText(f"Default directory: {toWrite[0]}\nDefault scale: {toWrite[1]} um/px")
         self.close()
 

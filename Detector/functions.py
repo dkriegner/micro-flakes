@@ -3,6 +3,7 @@ import logging as log
 import os
 import shutil
 import time
+import configparser
 
 import cv2
 from PIL import Image
@@ -148,17 +149,15 @@ def read_config() -> str:
 def read_cache() -> list:
     """Open existing a configuration file or create a new cache file."""
     if os.path.isfile(user_config_dir("config", "flakes_detector")):
-        # Create an empty list to store the lines
-        lines = []
-        # Open the file in read mode
-        with open(user_config_dir("config", "flakes_detector"), "r") as file:
-            # Loop through each line in the file
-            for line in file:
-                # Strip the newline character and append the line to the list
-                lines.append(line.strip())
-        # Return the list of lines
-        file.close()
-        return lines
+        # Create a ConfigParser object
+        config = configparser.ConfigParser()
+
+        # Read a configuration file
+        config.read(user_config_dir("config", "flakes_detector"))
+
+        # Get the values of the configuration file
+        values = [config["DEFAULT"]["Directory"], config["DEFAULT"]["SizeRatio"]]
+        return values
     else:
         # Create a directory
         if not os.path.exists(os.path.dirname(user_config_dir("config", "flakes_detector"))):
@@ -166,5 +165,6 @@ def read_cache() -> list:
 
         # Create configuration file
         file = open(user_config_dir("config", "flakes_detector"), "w+")
+        file.write("[DEFAULT]\nDirectory = \nSizeRatio = 0.187\n")
         file.close()
         return ["", ""]
