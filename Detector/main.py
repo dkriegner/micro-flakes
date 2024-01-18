@@ -59,7 +59,7 @@ def dialog() -> (str, str, bool, float, int):
     return path, name, more_output, min_size, sensitivity
 
 
-def line_command() -> (str, str, bool, float, int):
+def line_command() -> (str, str, bool, float, int, bool):
     # Load a set parameters via the command line
     parser = argparse.ArgumentParser()
 
@@ -86,10 +86,14 @@ def line_command() -> (str, str, bool, float, int):
                         help="Write sensitivity of script on objects in dark field. Script will mark all pixels with "
                              "RGB values bigger than the user\'s input. Default is 40",
                         type=int)
+    parser.add_argument("-q", "--quiet",
+                        default=False,
+                        help="The detector will close after processing an input picture without the user input",
+                        type=bool)
 
     args = parser.parse_args()
 
-    return args.path, args.name, args.out1, args.min_size/1.6952, args.sensitivity
+    return args.path, args.name, args.out1, args.min_size/1.6952, args.sensitivity, args.quiet
 
 
 def main():
@@ -100,7 +104,7 @@ def main():
     # Fixed setting parameters
     calibration = 0.187  # calibration factor to get real size of sample (converting from px to um)
 
-    path, name, more_output, min_size, sensitivity = line_command()  # Try to read a line-command input.
+    path, name, more_output, min_size, sensitivity, quiet = line_command()  # Try to read a line-command input.
 
     if path is None:  # If there is no parameter from command line
         # Print a welcome screen and ask user's inputs. This function can make a new image by a USB webcam.
@@ -109,4 +113,4 @@ def main():
     # Load an image, find all flakes and make a catalogue them.
     ImageCrawler(path, name, more_output, min_size, sensitivity, calibration)
 
-    input("\nThe task has been finished. Press some key for close a script.")
+    input("\nThe task has been finished. Press some key for close a script.") if quiet is False else None
