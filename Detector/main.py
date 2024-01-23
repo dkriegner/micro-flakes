@@ -89,7 +89,7 @@ def line_command() -> (str, str, bool, float, int, bool):
     parser.add_argument("-q", "--quiet",
                         default=False,
                         help="The detector will close after processing an input picture without the user input",
-                        type=bool)
+                        action='store_true')
 
     args = parser.parse_args()
 
