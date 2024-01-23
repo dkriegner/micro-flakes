@@ -43,3 +43,8 @@ jobs:
     - name: Test run console script
       run: |
         flakes-detector --quiet -p Samples_for_testing -n calib.jpg
+        $size = (Get-ChildItem Samples_for_testing\output\Catalogue_calib.jpg.xlsx).Length
+        Write-host "KB":($size/1KB)
+        If ($size -le 300KB) {
+          throw "Output file size below 100kB, please investigate if there is not a problem"
+        }
