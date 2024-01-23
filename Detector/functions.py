@@ -1,9 +1,9 @@
 """This file contains definitions of simple function."""
+import configparser
 import logging as log
 import os
 import shutil
 import time
-import configparser
 
 import cv2
 from PIL import Image

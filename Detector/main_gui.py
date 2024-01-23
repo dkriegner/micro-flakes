@@ -1,9 +1,8 @@
+import configparser
 import logging as log
 import os
 import sys
-import configparser
 
-from platformdirs import user_config_dir
 from PyQt6.QtCore import QObject, Qt, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QIcon, QTextCursor
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel, QPlainTextEdit,
