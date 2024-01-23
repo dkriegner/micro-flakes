@@ -22,24 +22,29 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=15 --max-line-length=127 --statistics
 
-#  testrun:
-#    runs-on: windows-latest
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        python-version: ["3.11", "3.12"]
-#
-#    steps:
-#    - uses: actions/checkout@v3
-#    - name: Set up Python ${{ matrix.python-version }}
-#      uses: actions/setup-python@v3
-#      with:
-#        python-version: ${{ matrix.python-version }}
-#    - name: Install dependencies
-#      run: |
-#        python -m pip install --upgrade pip
-#        pip install -r requirements.txt
-#        pip install .
-#    - name: Test run console script
-#      run: |
-#        flakes-detector -p Samples_for_testing -n calib.jpg
+  testrun:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install .
+    - name: Test run console script
+      run: |
+        flakes-detector --quiet -p Samples_for_testing -n calib.jpg
+        $size = (Get-ChildItem Samples_for_testing\output\Catalogue_calib.jpg.xlsx).Length
+        Write-host "KB":($size/1KB)
+        If ($size -le 100KB) {
+          throw "Output file size below 100kB, please investigate if there is not a problem"
+        }
